@@ -1,4 +1,5 @@
 import { getBlockContentByUid, getCreationTime, getTreeByUid } from "./utils";
+import { displayChar, displayWord, displayTODO, modeTODO } from "./index";
 
 const NEW_ELEMENT_ID = "tooltip-content-xxx";
 
@@ -54,7 +55,7 @@ function getChildrenStats(
     let content = tree[i].string;
     b++;
     c += content.length;
-    w += countWords(content);
+    if (displayWord) w += countWords(content);
     if (content.includes("[[DONE]]")) {
       task.done++;
       task.todo++;
@@ -62,7 +63,7 @@ function getChildrenStats(
     if (tree[i].children) {
       let r = getChildrenStats(tree[i].children);
       c += r.characters;
-      w += r.words;
+      if (displayWord) w += r.words;
       b += r.blocks;
       task.done += r.done;
       task.todo += r.todo;
@@ -93,64 +94,79 @@ function countWords(str) {
   return str.split(" ").length;
 }
 
-function displayPercent(a, b) {
-  const offSquare = "□";
-  const greenSquare = "🟩";
-  let left = "";
-  let right = "";
-  if (b <= 6) {
-    for (let i = 0; i < a; i++) {
-      left += greenSquare;
-    }
-    for (let i = 0; i < b - a; i++) {
-      right += offSquare;
-    }
-  } else {
-    let percent = (a / b) * 6;
-    if (percent === 6) left = "🟩🟩🟩🟩🟩🟩";
-    else if (percent > 5) {
-      left = "🟩🟩🟩🟩🟩";
-      right = "□";
-    } else if (percent > 4) {
-      left = "🟩🟩🟩🟩";
-      right = "□□";
-    } else if (percent > 3) {
-      left = "🟩🟩🟩";
-      right = "□□□";
-    } else if (percent > 2) {
-      left = "🟩🟩";
-      right = "□□□□";
-    } else if (percent > 1) {
-      left = "🟩";
-      right = "□□□□□";
+function displayPercentage(a, b, mode) {
+  let percent = a / b;
+  if (mode === "green squares") {
+    const offSquare = "□";
+    const greenSquare = "🟩";
+    let left = "";
+    let right = "";
+    if (b <= 6) {
+      for (let i = 0; i < a; i++) {
+        left += greenSquare;
+      }
+      for (let i = 0; i < b - a; i++) {
+        right += offSquare;
+      }
     } else {
-      right = "□□□□□□";
+      percent *= 6;
+      if (percent === 6) left = "🟩🟩🟩🟩🟩🟩";
+      else if (percent > 5) {
+        left = "🟩🟩🟩🟩🟩";
+        right = "□";
+      } else if (percent > 4) {
+        left = "🟩🟩🟩🟩";
+        right = "□□";
+      } else if (percent > 3) {
+        left = "🟩🟩🟩";
+        right = "□□□";
+      } else if (percent > 2) {
+        left = "🟩🟩";
+        right = "□□□□";
+      } else if (percent > 1) {
+        left = "🟩";
+        right = "□□□□□";
+      } else {
+        right = "□□□□□□";
+      }
     }
+    return left + right;
+  } else if (mode === "percent") {
+    percent = Math.trunc(percent * 100);
+    return `(${percent}%)`;
   }
-  return left + right;
 }
 
 export function infoTooltip(mutations) {
   let target = mutations[0].target;
-  if (target.classList.contains("bp3-popover-open")) {
+  if (
+    target.classList.contains("bp3-popover-open") &&
+    target.firstChild.className === "rm-bullet__inner"
+  ) {
     let parent = target.parentNode.parentNode.parentNode.parentNode;
     let uid = parent.querySelector(".roam-block").id.slice(-9);
     const tooltip = document.querySelector(".rm-bullet__tooltip");
 
     let dates = getDateStrings(uid);
-    tooltip.innerText += `\nUpdated:\n${dates.uTime} ${dates.uDate}\nCreated:\n${dates.cTime} ${dates.cDate}\n`;
+    tooltip.innerText += `\nUpdated:\n${dates.uTime} ${dates.uDate}\nCreated:\n${dates.cTime} ${dates.cDate}\n\n`;
 
     let tree = getTreeByUid(uid);
     console.log(tree);
     let bStats = getBlockStats(uid);
-    tooltip.innerText += `\n• ${bStats.characters}c ${bStats.words}w\n`;
+    let bString = [];
+    if (displayChar) bString.push(bStats.characters + "c");
+    if (displayWord) bString.push(bStats.words + "w");
+    if (displayChar || displayWord)
+      tooltip.innerText += `• ${bString.join(" ")}\n`;
     if (tree.children) {
       let cStats = getChildrenStats(tree.children);
-      tooltip.innerText += `${cStats.blocks} children ${cStats.characters}c ${cStats.words}w`;
-      let displayTODO = true;
-      if (displayTODO & (cStats.todo != 0)) {
-        let percent = Math.trunc((cStats.done / cStats.todo) * 100) + "%";
-        percent = displayPercent(cStats.done, cStats.todo);
+      let cString = [];
+      cString.push(`${cStats.blocks} children `);
+      if (displayChar) cString.push(`${cStats.characters}c`);
+      if (displayWord) cString.push(`${cStats.words}w`);
+      tooltip.innerText += `${cString.join(" ")}`;
+      if (displayTODO && cStats.todo != 0) {
+        let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
         tooltip.innerText += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
       }
     }

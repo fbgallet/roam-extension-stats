@@ -8,44 +8,79 @@ import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBloc
 import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
 import normalizePageTitle from "roamjs-components/queries/normalizePageTitle";
 
+export var displayChar;
+export var displayWord;
+export var displayTODO;
+export var modeTODO;
+
+function getModeTodo(mode) {
+  switch (mode) {
+    case "(50%)":
+      return "percent";
+      break;
+    case "🟩🟩🟩□□□":
+      return "green squares";
+      break;
+  }
+}
+
 const panelConfig = {
-  tabTitle: "___",
+  tabTitle: "Blocks infos",
   settings: [
     // INPUT example
+    // {
+    //   id: "footnotesHeader",
+    //   name: "Footnotes header",
+    //   description: "Text inserted as the parent block of footnotes:",
+    //   action: {
+    //     type: "input",
+    //     onChange: (evt) => {
+    //       //   footnotesTag = evt.target.value;
+    //     },
+    //   },
+    // },
     {
-      id: "footnotesHeader",
-      name: "Footnotes header",
-      description: "Text inserted as the parent block of footnotes:",
-      action: {
-        type: "input",
-        onChange: (evt) => {
-          //   footnotesTag = evt.target.value;
-        },
-      },
-    },
-    // SWITCH example
-    {
-      id: "insertLine",
-      name: "Insert a line above footnotes header",
-      description:
-        "Insert a block drawing a line just above the footnotes header, at the bottom of the page:",
+      id: "displayCharacters",
+      name: "Character count",
+      description: "Display character count:",
       action: {
         type: "switch",
         onChange: (evt) => {
-          // insertLineBeforeFootnotes = !insertLineBeforeFootnotes;
+          displayChar = !displayChar;
         },
       },
     },
-    // SELECT example
     {
-      id: "hotkeys",
-      name: "Hotkeys",
-      description: "Hotkeys to insert/delete footnote",
+      id: "displayWords",
+      name: "Word count",
+      description: "Display word count:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayWord = !displayWord;
+        },
+      },
+    },
+    {
+      id: "displayTODO",
+      name: "Count TODO",
+      description: "Display count DONE/TODO ratio in children:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayTODO = !displayTODO;
+        },
+      },
+    },
+    {
+      id: "modeTODO",
+      name: "DONE/TODO percentage",
+      description: "DONE/TODO percentage display mode:",
       action: {
         type: "select",
-        items: ["Ctrl + Alt + F", "Ctrl + Shift + F"],
+        items: ["(50%)", "🟩🟩🟩□□□"],
         onChange: (evt) => {
-          // secondHotkey = getHotkeys(evt);
+          modeTODO = getModeTodo(evt);
         },
       },
     },
@@ -53,13 +88,21 @@ const panelConfig = {
 };
 
 export default {
-  onload: ({ extensionAPI }) => {
+  onload: async ({ extensionAPI }) => {
     extensionAPI.settings.panel.create(panelConfig);
 
-    // get settings from setting panel
-    // if (extensionAPI.settings.get("footnotesHeader") === null)
-    //   extensionAPI.settings.set("footnotesHeader", "#footnotes");
-    // footnotesTag = extensionAPI.settings.get("footnotesHeader");
+    if (extensionAPI.settings.get("displayCharacters") === null)
+      await extensionAPI.settings.set("displayCharacters", true);
+    displayChar = extensionAPI.settings.get("displayCharacters");
+    if (extensionAPI.settings.get("displayWords") === null)
+      await extensionAPI.settings.set("displayWords", true);
+    displayWord = extensionAPI.settings.get("displayWords");
+    if (extensionAPI.settings.get("displayTODO") === null)
+      await extensionAPI.settings.set("displayTODO", true);
+    displayTODO = extensionAPI.settings.get("displayTODO");
+    if (extensionAPI.settings.get("modeTODO") === null)
+      await extensionAPI.settings.set("modeTODO", "percent");
+    modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
 
     // Add command to command palette
     //   window.roamAlphaAPI.ui.commandPalette.addCommand({
