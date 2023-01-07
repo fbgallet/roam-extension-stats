@@ -93,6 +93,43 @@ function countWords(str) {
   return str.split(" ").length;
 }
 
+function displayPercent(a, b) {
+  const offSquare = "□";
+  const greenSquare = "🟩";
+  let left = "";
+  let right = "";
+  if (b <= 6) {
+    for (let i = 0; i < a; i++) {
+      left += greenSquare;
+    }
+    for (let i = 0; i < b - a; i++) {
+      right += offSquare;
+    }
+  } else {
+    let percent = (a / b) * 6;
+    if (percent === 6) left = "🟩🟩🟩🟩🟩🟩";
+    else if (percent > 5) {
+      left = "🟩🟩🟩🟩🟩";
+      right = "□";
+    } else if (percent > 4) {
+      left = "🟩🟩🟩🟩";
+      right = "□□";
+    } else if (percent > 3) {
+      left = "🟩🟩🟩";
+      right = "□□□";
+    } else if (percent > 2) {
+      left = "🟩🟩";
+      right = "□□□□";
+    } else if (percent > 1) {
+      left = "🟩";
+      right = "□□□□□";
+    } else {
+      right = "□□□□□□";
+    }
+  }
+  return left + right;
+}
+
 export function infoTooltip(mutations) {
   let target = mutations[0].target;
   if (target.classList.contains("bp3-popover-open")) {
@@ -109,11 +146,12 @@ export function infoTooltip(mutations) {
     tooltip.innerText += `\n• ${bStats.characters}c ${bStats.words}w\n`;
     if (tree.children) {
       let cStats = getChildrenStats(tree.children);
-      tooltip.innerText += `↳ ${cStats.characters}c ${cStats.words}w ${cStats.blocks}chld`;
+      tooltip.innerText += `${cStats.blocks} children ${cStats.characters}c ${cStats.words}w`;
       let displayTODO = true;
       if (displayTODO & (cStats.todo != 0)) {
-        let percent = Math.trunc((cStats.done / cStats.todo) * 100);
-        tooltip.innerText += `\n☑ ${cStats.done}/${cStats.todo} (${percent}%)`;
+        let percent = Math.trunc((cStats.done / cStats.todo) * 100) + "%";
+        percent = displayPercent(cStats.done, cStats.todo);
+        tooltip.innerText += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
       }
     }
   }

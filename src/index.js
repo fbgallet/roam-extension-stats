@@ -101,15 +101,11 @@ export default {
     //   });
     // }
 
-    addObserver(
-      document.getElementsByClassName("roam-article")[0],
-      infoTooltip,
-      {
-        childList: false,
-        subtree: true,
-        attributeFilter: ["class"],
-      }
-    );
+    addObserver(document.getElementsByClassName("roam-app")[0], infoTooltip, {
+      childList: false,
+      subtree: true,
+      attributeFilter: ["class"],
+    });
 
     console.log("Extension loaded.");
     //return;
