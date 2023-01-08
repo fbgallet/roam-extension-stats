@@ -2,6 +2,8 @@
 
 ### Get a quick overview of several informations on any block and its children, directly in the native bullet tooltip
 
+![block info v1](https://user-images.githubusercontent.com/74436347/211206704-971c844e-8665-46dd-88da-242eaebbebbb.gif)
+
 Just over any bullet to see the following info:
 
 - Creation date
