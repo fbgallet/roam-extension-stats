@@ -1,9 +1,6 @@
 import { getBlockContentByUid, getCreationTime, getTreeByUid } from "./utils";
 import { displayChar, displayWord, displayTODO, modeTODO } from "./index";
 
-const NEW_ELEMENT_ID = "tooltip-content-xxx";
-
-// store observers globally so they can be disconnected
 var runners = {
   menuItems: [],
   observers: [],
@@ -169,51 +166,6 @@ export function infoTooltip(mutations) {
         let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
         tooltip.innerText += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
       }
-    }
-  }
-  if (
-    target === "x"
-    //document.querySelectorAll("rm-bullet .bp3-popover-wrapper.bp3-popover-open") //&& // .rm-bullet__tooltip
-    //  !document.getElementById(NEW_ELEMENT_ID)
-  ) {
-    const tooltipContent =
-      document.getElementsByClassName("rm-bullet__tooltip");
-    console.log("coucou");
-    console.log(tooltipContent);
-    if (tooltipContent) {
-      // let uid = window.roamAlphaAPI.ui.getFocusedBlock()?.["block-uid"];
-      // noteInline = getInlineNote();
-      // if (noteInline.content.length > 0) {
-      //   let hasCreateNoteItem =
-      //     blockAutocomplete.querySelector(".create-footnote");
-      //   if (hasCreateNoteItem === null) {
-      //     footnoteButton = blockAutocomplete.insertAdjacentElement(
-      //       "afterbegin",
-      //       createFootnoteButton(noteInline.content)
-      //     );
-      //   } else {
-      //     blockAutocomplete.removeChild(footnoteButton);
-      //     footnoteButton = blockAutocomplete.insertAdjacentElement(
-      //       "afterbegin",
-      //       createFootnoteButton(noteInline.content)
-      //     );
-      //   }
-      //   let addAsBlockElt = footnoteButton.nextElementSibling;
-      //   document.addEventListener(
-      //     "keydown",
-      //     function (e) {
-      //       keyboardSelect(e, uid, addAsBlockElt);
-      //     },
-      //     { once: true }
-      //   );
-      //   footnoteButton.addEventListener(
-      //     "click",
-      //     function () {
-      //       insertFootNote(uid);
-      //     },
-      //     { once: true }
-      //   );
-      // }
     }
   }
 }

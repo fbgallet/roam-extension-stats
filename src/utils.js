@@ -36,21 +36,4 @@ export function getCreationTime(uid) {
   return window.roamAlphaAPI.pull("[:create/time]", [":block/uid", uid])[
     ":create/time"
   ];
-  //   let block = window.roamAlphaAPI.q(`[:find (pull ?page
-  //   [:block/uid :create/time ])
-  // :where [?page :block/uid "${uid}"]]`);
-  //   let date = new Date(block[0][0].time);
-  //   return date;
-}
-
-export function processNotesInTree(tree, callback, callbackArgs) {
-  //  tree = tree.sort((a, b) => a.order - b.order);
-  for (let i = 0; i < tree.length; i++) {
-    let content = tree[i].string;
-    callback(callbackArgs);
-    let subTree = tree[i].children;
-    if (subTree) {
-      processNotesInTree(subTree, callback);
-    }
-  }
 }
