@@ -17,10 +17,10 @@ function getModeTodo(mode) {
   switch (mode) {
     case "(50%)":
       return "percent";
-      break;
     case "🟩🟩🟩□□□":
       return "green squares";
-      break;
+    default:
+      return "percent";
   }
 }
 
@@ -63,8 +63,8 @@ const panelConfig = {
     },
     {
       id: "displayTODO",
-      name: "Count TODO",
-      description: "Display count DONE/TODO ratio in children:",
+      name: "TODO count",
+      description: "Display DONE/TODO ratio in children:",
       action: {
         type: "switch",
         onChange: (evt) => {
@@ -75,7 +75,7 @@ const panelConfig = {
     {
       id: "modeTODO",
       name: "DONE/TODO percentage",
-      description: "DONE/TODO percentage display mode:",
+      description: "DONE/TODO percentage display mode (example):",
       action: {
         type: "select",
         items: ["(50%)", "🟩🟩🟩□□□"],
@@ -101,7 +101,7 @@ export default {
       await extensionAPI.settings.set("displayTODO", true);
     displayTODO = extensionAPI.settings.get("displayTODO");
     if (extensionAPI.settings.get("modeTODO") === null)
-      await extensionAPI.settings.set("modeTODO", "percent");
+      await extensionAPI.settings.set("modeTODO", "(50%)");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
 
     // Add command to command palette
@@ -150,7 +150,7 @@ export default {
       attributeFilter: ["class"],
     });
 
-    console.log("Extension loaded.");
+    console.log("Block Info extension loaded.");
     //return;
   },
   onunload: () => {
@@ -163,6 +163,6 @@ export default {
     // roamAlphaAPI.ui.blockContextMenu.removeCommand({
     //   label: "Color Highlighter: Remove color tags",
     // });
-    console.log("Extension unloaded");
+    console.log("Block Info extension unloaded");
   },
 };

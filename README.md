@@ -9,7 +9,7 @@ Just over any bullet to see the following info:
 - Creation date
 - Character and word count in current block
 - Carcarcter and word count in children blocks, and children block count
-- DONE/TODO ratio
+- DONE/TODO ratio and percentage (or progress bar with 6 boxes: "🟩🟩🟩□□□" means more that 50%, less than 66%)
 
 Do you think other information could be useful? Don't hesitate to let me know!
 
