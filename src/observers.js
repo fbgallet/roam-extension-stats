@@ -148,7 +148,7 @@ export function infoTooltip(mutations) {
     tooltip.innerText += `\nUpdated:\n${dates.uTime} ${dates.uDate}\nCreated:\n${dates.cTime} ${dates.cDate}\n\n`;
 
     let tree = getTreeByUid(uid);
-    console.log(tree);
+    //console.log(tree);
     let bStats = getBlockStats(uid);
     let bString = [];
     if (displayChar) bString.push(bStats.characters + "c");
