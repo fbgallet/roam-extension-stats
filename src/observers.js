@@ -1,5 +1,18 @@
-import { getBlockContentByUid, getCreationTime, getTreeByUid } from "./utils";
-import { displayChar, displayWord, displayTODO, modeTODO } from "./index";
+import {
+  getBlockContentByUid,
+  getBlockTimes,
+  getTreeByUid,
+  getUser,
+} from "./utils";
+import {
+  displayEditName,
+  displayChar,
+  displayWord,
+  displayTODO,
+  modeTODO,
+  dateFormat,
+  localDateFormat,
+} from "./index";
 
 var runners = {
   menuItems: [],
@@ -21,24 +34,28 @@ export function disconnectObserver() {
 }
 
 function getDateStrings(uid) {
-  let t = document.querySelectorAll(".rm-bullet-tooltip__time");
-  t[0].style.display = "none";
-  t[1].style.display = "none";
-  let creationTime = getCreationTime(uid);
-  let cDate = new Date(creationTime).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
+  let t = document.querySelector(".rm-bullet__tooltip"); // .rm-bullet-tooltip__time
+  let blockTimes = getBlockTimes(uid);
+  let c = formatDateAndTime(blockTimes.create);
+  let u = formatDateAndTime(blockTimes.update);
+  return {
+    u: u,
+    c: c,
+  };
+}
+
+function formatDateAndTime(timestamp) {
+  let date = new Date(timestamp).toLocaleDateString(localDateFormat, {
+    // default: "en-US"
+    dateStyle: dateFormat,
+    // year: "numeric",
+    // month: "numeric",
+    // day: "numeric",
   });
-  let cTime = new Date(creationTime).toLocaleTimeString("en-US", {
+  let time = new Date(timestamp).toLocaleTimeString(localDateFormat, {
     hour12: false,
   });
-  return {
-    uTime: t[0].innerText.trim(),
-    uDate: t[1].innerText,
-    cTime: cTime,
-    cDate: cDate,
-  };
+  return { date: date, time: time };
 }
 
 function getChildrenStats(
@@ -135,17 +152,30 @@ function displayPercentage(a, b, mode) {
 }
 
 export function infoTooltip(mutations) {
+  //console.log(mutations);
   let target = mutations[0].target;
   if (
     target.classList.contains("bp3-popover-open") &&
-    target.firstChild.className === "rm-bullet__inner"
+    //target.firstChild.className === "rm-bullet__inner" // does the issue come from here ?
+    target.querySelector(".rm-bullet__inner")
   ) {
-    let parent = target.parentNode.parentNode.parentNode.parentNode;
+    //let parent = target.parentNode.parentNode.parentNode.parentNode;
+    let parent = target.closest(".rm-block-main");
     let uid = parent.querySelector(".roam-block").id.slice(-9);
     const tooltip = document.querySelector(".rm-bullet__tooltip");
+    tooltip.innerText = "";
+
+    let editName = getUser(uid);
+    if (displayEditName) tooltip.innerText += editName + "\n";
 
     let dates = getDateStrings(uid);
-    tooltip.innerText += `\nUpdated:\n${dates.uTime} ${dates.uDate}\nCreated:\n${dates.cTime} ${dates.cDate}\n\n`;
+    if (
+      dates.c.date != dates.u.date ||
+      dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3)
+    ) {
+      tooltip.innerText += `Updated:\n${dates.u.time} ${dates.u.date}\n`;
+    }
+    tooltip.innerText += `Created:\n${dates.c.time} ${dates.c.date}\n\n`;
 
     let tree = getTreeByUid(uid);
     //console.log(tree);

@@ -8,6 +8,10 @@ import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBloc
 import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
 import normalizePageTitle from "roamjs-components/queries/normalizePageTitle";
 
+export var displayEditName;
+export var dateFormat;
+var localDate;
+export var localDateFormat;
 export var displayChar;
 export var displayWord;
 export var displayTODO;
@@ -39,6 +43,44 @@ const panelConfig = {
     //     },
     //   },
     // },
+    {
+      id: "displayName",
+      name: "User Name",
+      description: "Display the name of the last user who updated the block",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayEditName = !displayEditName;
+        },
+      },
+    },
+    {
+      id: "dateFormat",
+      name: "Date format",
+      description: "Select the way dates are displayed",
+      action: {
+        type: "select",
+        items: ["short", "medium", "long", "full"],
+        onChange: (evt) => {
+          dateFormat = evt;
+        },
+      },
+    },
+    {
+      id: "localDate",
+      name: "Local date format",
+      description:
+        "Display the dates in the local format if enabled, or default en-US",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          localDate = !localDate;
+          localDate
+            ? (localDateFormat = undefined)
+            : (localDateFormat = "en-US");
+        },
+      },
+    },
     {
       id: "displayCharacters",
       name: "Character count",
@@ -89,8 +131,17 @@ const panelConfig = {
 
 export default {
   onload: async ({ extensionAPI }) => {
-    extensionAPI.settings.panel.create(panelConfig);
-
+    if (extensionAPI.settings.get("displayName") === null)
+      await extensionAPI.settings.set("displayName", true);
+    displayEditName = extensionAPI.settings.get("displayName");
+    if (extensionAPI.settings.get("dateFormat") === null)
+      await extensionAPI.settings.set("dateFormat", "short");
+    dateFormat = extensionAPI.settings.get("dateFormat");
+    if (extensionAPI.settings.get("localDate") === null)
+      await extensionAPI.settings.set("localDate", true);
+    localDateFormat = extensionAPI.settings.get("localDate")
+      ? (localDateFormat = undefined)
+      : (localDateFormat = "en-US");
     if (extensionAPI.settings.get("displayCharacters") === null)
       await extensionAPI.settings.set("displayCharacters", true);
     displayChar = extensionAPI.settings.get("displayCharacters");
@@ -103,6 +154,8 @@ export default {
     if (extensionAPI.settings.get("modeTODO") === null)
       await extensionAPI.settings.set("modeTODO", "(50%)");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
+
+    extensionAPI.settings.panel.create(panelConfig);
 
     // Add command to command palette
     //   window.roamAlphaAPI.ui.commandPalette.addCommand({

@@ -32,8 +32,24 @@ function getFirstChildUid(uid) {
   return window.roamAlphaAPI.q(q)[0][0].children[0].uid;
 }
 
-export function getCreationTime(uid) {
-  return window.roamAlphaAPI.pull("[:create/time]", [":block/uid", uid])[
-    ":create/time"
-  ];
+export function getUser(uid) {
+  return window.roamAlphaAPI.pull(
+    "[{:edit/user [{:user/display-page [:node/title]}]}]",
+    [
+      //[:user/display-page]
+      ":block/uid",
+      uid,
+    ]
+  )[":edit/user"][":user/display-page"][":node/title"];
+}
+
+export function getBlockTimes(uid) {
+  let times = window.roamAlphaAPI.pull("[:create/time :edit/time]", [
+    ":block/uid",
+    uid,
+  ]);
+  return {
+    create: times[":create/time"],
+    update: times[":edit/time"],
+  };
 }
