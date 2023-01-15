@@ -4,7 +4,7 @@ export const pageRegex = /\[\[.*\]\]/g; // very simplified, not recursive...
 export function getTreeByUid(uid) {
   if (uid)
     return window.roamAlphaAPI.q(`[:find (pull ?page
-                     [:block/uid :block/string :block/children :block/refs
+                     [:block/uid :block/string :block/children :block/refs :edit/time
                         {:block/children ...} ])
                       :where [?page :block/uid "${uid}"]  ]`)[0][0];
   else return null;
@@ -23,6 +23,16 @@ export async function getTopOrActiveBlockUid() {
     let uid = await window.roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid();
     return getFirstChildUid(uid);
   }
+}
+
+export async function getMainPageUid() {
+  let uid = await window.roamAlphaAPI.ui.mainWindow.getOpenPageOrBlockUid();
+  let pageUid = window.roamAlphaAPI.pull("[{:block/page [:block/uid]}]", [
+    ":block/uid",
+    uid,
+  ]);
+  if (pageUid === null) return uid;
+  return pageUid[":block/page"][":block/uid"];
 }
 
 function getFirstChildUid(uid) {

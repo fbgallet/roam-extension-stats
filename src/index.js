@@ -3,10 +3,16 @@ import {
   getTreeByUid,
   processNotesInTree,
 } from "./utils";
-import { addObserver, disconnectObserver, infoTooltip } from "./observers";
+import {
+  addObserver,
+  disconnectObserver,
+  infoPage,
+  infoTooltip,
+} from "./observers";
 import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBlockUid";
 import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
 import normalizePageTitle from "roamjs-components/queries/normalizePageTitle";
+import { displayToast, displayTooltip } from "./components";
 
 export var displayEditName;
 export var dateFormat;
@@ -157,16 +163,12 @@ export default {
 
     extensionAPI.settings.panel.create(panelConfig);
 
-    // Add command to command palette
-    //   window.roamAlphaAPI.ui.commandPalette.addCommand({
-    //   label: "Insert footnote",
-    //   callback: () => {
-    //     //        let position = document.activeElement.selectionStart;
-    //     //        console.log(position);
-    //     let startUid = window.roamAlphaAPI.ui.getFocusedBlock()?.["block-uid"];
-    //     if (startUid) insertFootNote(startUid);
-    //   },
-    // });
+    window.roamAlphaAPI.ui.commandPalette.addCommand({
+      label: "Get Page Info",
+      callback: async () => {
+        displayToast(await infoPage());
+      },
+    });
 
     // Add command to block context menu
     // roamAlphaAPI.ui.blockContextMenu.addCommand({
@@ -202,13 +204,47 @@ export default {
       subtree: true,
       attributeFilter: ["class"],
     });
+    let pageTitle = document.querySelector(".rm-title-display");
+
+    let isHover = false;
+
+    pageTitle.addEventListener("mouseleave", () => {
+      isHover = false;
+      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
+    });
+
+    pageTitle.addEventListener("mouseover", async () => {
+      isHover = true;
+      setTimeout(async () => {
+        if (!isHover) return;
+        let tooltip = document.createElement("span");
+        pageTitle.style.position = "relative";
+        tooltip.classList.add("tooltiptext");
+        let prevTooltip = pageTitle.querySelector(".tooltiptext");
+        prevTooltip ? (tooltip = prevTooltip) : pageTitle.appendChild(tooltip); // idem
+        tooltip.innerText = await infoPage();
+        console.log("DONE!");
+      }, 450);
+      //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
+    });
+    // pageTitle.addEventListener("mouseleave", () => {
+    //   document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
+    // });
+
+    async function ctrlDown(e) {
+      if (e.ctrlKey || e.key == "i") {
+        displayToast(await infoPage());
+      }
+      //document.removeEventListener("keydown", ctrlDown, { once: true });
+    }
 
     console.log("Block Info extension loaded.");
     //return;
   },
   onunload: () => {
     disconnectObserver();
-
+    let pageTitle = document.querySelector(".rm-title-display");
+    pageTitle.removeEventListener("mouseover", () => {});
     // window.roamAlphaAPI.ui.commandPalette.removeCommand({
     //   label: "Footnotes: Reorder footnotes on current page",
     // });

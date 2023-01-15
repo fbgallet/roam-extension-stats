@@ -1,0 +1,60 @@
+.rm-title-display:hover {
+  cursor: help !important;
+}
+
+.rm-modal-dialog,
+.bp3-dialog {
+  color: inherit;
+}
+
+/* .tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+} */
+
+.tooltiptext {
+  visibility: hidden;
+  width: auto;
+  background-color: var(--bc-tooltip__content, #394b59);
+  color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87));
+  font-size: var(--fs-tooltip__content, 12px) !important;
+  font-family: var(--ff-app__div, inherit);
+  text-align: left;
+  font-weight: 300;
+  line-height: 1.5rem;
+  border-radius: 3px;
+  border: var(--bt-tooltip, 1px solid gray);
+  padding: 10px 12px;
+  position: absolute;
+  top: 110%;
+  left: 10px;
+  z-index: 99;
+  opacity: 0;
+}
+
+.tooltiptext::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%; /* At the top of the tooltip */
+  left: 50%;
+  margin-left: -8px;
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent transparent var(--bc-tooltip__content, #394b59);
+}
+
+.rm-title-display:hover .tooltiptext {
+  transition-delay: 0.5s;
+  visibility: visible;
+  opacity: 1;
+}
+
+/* .rm-title-display:hover::after {
+  content: "🛈 Ctrl or i";
+  font-size: 0.6em;
+  font-weight: 200;
+  position: absolute;
+  opacity: 0.8;
+  right: 5%;
+} */
