@@ -227,16 +227,6 @@ export default {
       }, 450);
       //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
     });
-    // pageTitle.addEventListener("mouseleave", () => {
-    //   document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
-    // });
-
-    async function ctrlDown(e) {
-      if (e.ctrlKey || e.key == "i") {
-        displayToast(await infoPage());
-      }
-      //document.removeEventListener("keydown", ctrlDown, { once: true });
-    }
 
     console.log("Block Info extension loaded.");
     //return;

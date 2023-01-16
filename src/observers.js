@@ -62,6 +62,7 @@ function formatDateAndTime(timestamp) {
 function getChildrenStats(
   tree,
   newestTime = 0,
+  editUser = "",
   c = 0,
   w = 0,
   b = 0,
@@ -76,7 +77,10 @@ function getChildrenStats(
       task.done++;
       task.todo++;
     } else if (content.includes("[[TODO]]")) task.todo++;
-    if (tree[i].time > newestTime) newestTime = tree[i].time;
+    if (tree[i].time > newestTime) {
+      newestTime = tree[i].time;
+      editUser = getUser(tree[i].uid);
+    }
     if (tree[i].children) {
       let r = getChildrenStats(tree[i].children, newestTime);
       c += r.characters;
@@ -85,6 +89,7 @@ function getChildrenStats(
       task.done += r.done;
       task.todo += r.todo;
       newestTime = r.newestTime;
+      editUser = r.editUser;
     }
   }
   return {
@@ -94,6 +99,7 @@ function getChildrenStats(
     done: task.done,
     todo: task.todo,
     newestTime: newestTime,
+    editUser: editUser,
   };
 }
 
@@ -192,8 +198,9 @@ function getFormatedChildrenStats(uid, node) {
     let cString = [];
     if (node === "page") {
       let newestTime = formatDateAndTime(cStats.newestTime);
-      result =
-        `Last updated block:\n${newestTime.date} ${newestTime.time}\n` + result;
+      let updateString = `Last updated block:\n${newestTime.date} ${newestTime.time}\n`;
+      if (displayEditName) updateString += `by ${cStats.editUser}\n`;
+      result = updateString + result;
     }
     let nodeType;
     node === "page" ? (nodeType = "blocks") : (nodeType = "children");
