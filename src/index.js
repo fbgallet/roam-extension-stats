@@ -1,5 +1,6 @@
 import {
   getBlockContentByUid,
+  getPageUidByTitle,
   getTreeByUid,
   processNotesInTree,
 } from "./utils";
@@ -22,6 +23,9 @@ export var displayChar;
 export var displayWord;
 export var displayTODO;
 export var modeTODO;
+
+let pageTitle = undefined;
+let isHover;
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -135,6 +139,61 @@ const panelConfig = {
   ],
 };
 
+function onPageLoad(e) {
+  // setTimeout(() => {
+  if (pageTitle) {
+    pageTitle.removeEventListener("mouseenter", onTitleOver);
+    pageTitle.removeEventListener("mouseleave", onTitleLeave);
+  }
+  setTimeout(() => {
+    pageTitle = document.querySelector(".rm-title-display");
+    if (!pageTitle) return;
+    isHover = false;
+
+    pageTitle.addEventListener("mouseenter", onTitleOver);
+
+    pageTitle.addEventListener(
+      "mouseleave",
+      onTitleLeave
+      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
+    );
+  }, 500);
+}
+
+function onTitleOver(e) {
+  {
+    isHover = true;
+    setTimeout(async () => {
+      if (!isHover) return;
+      let tooltip = document.createElement("span");
+      e.target.style.position = "relative";
+      tooltip.classList.add("tooltiptext");
+      let prevTooltip = e.target.querySelector(".tooltiptext");
+      prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip); // idem
+      let pageUid;
+      if (e.target.classList.contains("page")) {
+        //console.log(e.target.innerText);
+        pageUid = await getPageUidByTitle(e.target.innerText);
+        console.log(pageUid);
+      }
+      tooltip.innerText = await infoPage(pageUid);
+    }, 450);
+    //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
+  }
+}
+
+function onTitleLeave() {
+  isHover = false;
+}
+
+function shortcutsListener() {
+  let shortcuts = document.querySelectorAll(".page");
+  shortcuts.forEach((s) => {
+    s.addEventListener("mouseenter", onTitleOver);
+    s.addEventListener("mouseleave", onTitleLeave);
+  });
+}
+
 export default {
   onload: async ({ extensionAPI }) => {
     if (extensionAPI.settings.get("displayName") === null)
@@ -204,29 +263,10 @@ export default {
       subtree: true,
       attributeFilter: ["class"],
     });
-    let pageTitle = document.querySelector(".rm-title-display");
 
-    let isHover = false;
-
-    pageTitle.addEventListener("mouseleave", () => {
-      isHover = false;
-      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
-    });
-
-    pageTitle.addEventListener("mouseover", async () => {
-      isHover = true;
-      setTimeout(async () => {
-        if (!isHover) return;
-        let tooltip = document.createElement("span");
-        pageTitle.style.position = "relative";
-        tooltip.classList.add("tooltiptext");
-        let prevTooltip = pageTitle.querySelector(".tooltiptext");
-        prevTooltip ? (tooltip = prevTooltip) : pageTitle.appendChild(tooltip); // idem
-        tooltip.innerText = await infoPage();
-        console.log("DONE!");
-      }, 450);
-      //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
-    });
+    onPageLoad();
+    window.addEventListener("popstate", onPageLoad); // popstate ? load ?
+    shortcutsListener();
 
     console.log("Block Info extension loaded.");
     //return;
@@ -234,7 +274,14 @@ export default {
   onunload: () => {
     disconnectObserver();
     let pageTitle = document.querySelector(".rm-title-display");
-    pageTitle.removeEventListener("mouseover", () => {});
+    pageTitle.removeEventListener("mouseenter", onTitleOver);
+    pageTitle.removeEventListener("mouseleave", onTitleLeave);
+    window.removeEventListener("popstate", onPageLoad);
+    let shortcuts = document.querySelectorAll(".page");
+    shortcuts.forEach((s) => {
+      s.removeEventListener("mouseenter", onTitleOver);
+      s.removeEventListener("mouseleave", onTitleLeave);
+    });
     // window.roamAlphaAPI.ui.commandPalette.removeCommand({
     //   label: "Footnotes: Reorder footnotes on current page",
     // });

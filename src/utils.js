@@ -35,6 +35,12 @@ export async function getMainPageUid() {
   return pageUid[":block/page"][":block/uid"];
 }
 
+export function getPageUidByTitle(title) {
+  console.log(title);
+  let result = window.roamAlphaAPI.pull("[:block/uid]", [":node/title", title]);
+  return result[":block/uid"]; //
+}
+
 function getFirstChildUid(uid) {
   let q = `[:find (pull ?c
                        [:block/uid :block/children {:block/children ...}])
@@ -43,14 +49,31 @@ function getFirstChildUid(uid) {
 }
 
 export function getUser(uid) {
-  return window.roamAlphaAPI.pull(
-    "[{:edit/user [{:user/display-page [:node/title]}]}]",
+  let result = window.roamAlphaAPI.pull(
+    "[{:edit/user [{:user/display-page [:node/title]}]} {:create/user [{:user/display-page [:node/title]}]}]",
     [
       //[:user/display-page]
       ":block/uid",
       uid,
     ]
-  )[":edit/user"][":user/display-page"][":node/title"];
+  );
+  let editUser, createUser;
+  if (!result) {
+    editUser = "unknown user";
+    createUser = "unknown user";
+  } else {
+    !result[":edit/user"]
+      ? (editUser = "unknown user")
+      : (editUser = result[":edit/user"][":user/display-page"][":node/title"]);
+    !result[":create/user"]
+      ? (editUser = "unknown user")
+      : (createUser =
+          result[":create/user"][":user/display-page"][":node/title"]);
+  }
+  return {
+    editUser: editUser,
+    createUser: createUser,
+  };
 }
 
 export function getBlockTimes(uid) {
