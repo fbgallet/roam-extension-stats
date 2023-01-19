@@ -64,7 +64,7 @@ export async function displayToast(infos) {
   });
 
   let dialog = document.querySelector(
-    ".bp3-dialog:not(.rm-modal-dialog--command-palette)"
+    ".bp3-dialog:not(.rm-modal-dialog--command-palette):not(.rm-extensions-marketplace-dialog)"
   );
   dialog.style.width = "auto";
   dialog.style.position = "absolute";

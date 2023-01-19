@@ -36,7 +36,6 @@ export async function getMainPageUid() {
 }
 
 export function getPageUidByTitle(title) {
-  console.log(title);
   let result = window.roamAlphaAPI.pull("[:block/uid]", [":node/title", title]);
   return result[":block/uid"]; //
 }
@@ -86,3 +85,21 @@ export function getBlockTimes(uid) {
     update: times[":edit/time"],
   };
 }
+
+export const resolveReferences = (content, uidsArray) => {
+  if (uidRegex.test(content)) {
+    uidRegex.lastIndex = 0;
+    let matches = content.matchAll(uidRegex);
+    for (const match of matches) {
+      let refUid = match[0].slice(2, -2);
+      let isNewRef = !uidsArray.includes(refUid);
+      uidsArray.push(refUid);
+      let resolvedRef = getBlockContentByUid(refUid);
+      uidRegex.lastIndex = 0;
+      if (uidRegex.test(resolvedRef) && isNewRef)
+        resolvedRef = resolveReferences(resolvedRef, uidsArray);
+      content = content.replace(match, resolvedRef);
+    }
+  }
+  return content;
+};

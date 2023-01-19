@@ -1,26 +1,23 @@
-import {
-  getBlockContentByUid,
-  getBlockTimes,
-  getMainPageUid,
-  getTreeByUid,
-  getUser,
-} from "./utils";
-import {
-  displayEditName,
-  displayChar,
-  displayWord,
-  displayTODO,
-  modeTODO,
-  dateFormat,
-  localDateFormat,
-} from "./index";
+import { getMainPageUid, getPageUidByTitle, getUser } from "./utils";
+import { getFormatedChildrenStats, getFormatedDateStrings } from "./infos";
+import { displayShortcutInfo } from ".";
 
 var runners = {
   menuItems: [],
   observers: [],
 };
+let pageTitle = undefined;
+let isHover;
 
-export function addObserver(element, callback, options) {
+export function connectObservers() {
+  addObserver(document.getElementsByClassName("roam-app")[0], infoTooltip, {
+    childList: false,
+    subtree: true,
+    attributeFilter: ["class"],
+  });
+}
+
+function addObserver(element, callback, options) {
   let myObserver = new MutationObserver(callback);
   myObserver.observe(element, options);
 
@@ -34,201 +31,82 @@ export function disconnectObserver() {
   }
 }
 
-function getDateStrings(uid) {
-  // let t = document.querySelector(".rm-bullet__tooltip"); // .rm-bullet-tooltip__time
-  let blockTimes = getBlockTimes(uid);
-  let c = formatDateAndTime(blockTimes.create);
-  let u = formatDateAndTime(blockTimes.update);
-  return {
-    u: u,
-    c: c,
-  };
+export function addListeners() {
+  window.addEventListener("popstate", onPageLoad);
+  addShortcutsListener();
 }
 
-function formatDateAndTime(timestamp) {
-  let date = new Date(timestamp).toLocaleDateString(localDateFormat, {
-    // default: "en-US"
-    dateStyle: dateFormat,
-    // year: "numeric",
-    // month: "numeric",
-    // day: "numeric",
+export function addShortcutsListener() {
+  if (displayShortcutInfo) shortcutsListener();
+}
+
+export function removeListeners() {
+  let pageTitle = document.querySelector(".rm-title-display");
+  pageTitle.removeEventListener("mouseenter", onTitleOver);
+  pageTitle.removeEventListener("mouseleave", onTitleLeave);
+  window.removeEventListener("popstate", onPageLoad);
+  removeShortcutsListeners();
+}
+
+export function removeShortcutsListeners() {
+  let shortcuts = document.querySelectorAll(".page");
+  shortcuts.forEach((s) => {
+    s.removeEventListener("mouseenter", onTitleOver);
+    s.removeEventListener("mouseleave", onTitleLeave);
   });
-  let time = new Date(timestamp).toLocaleTimeString(localDateFormat, {
-    hour12: false,
+}
+
+export function onPageLoad(e) {
+  // setTimeout(() => {
+  if (pageTitle) {
+    pageTitle.removeEventListener("mouseenter", onTitleOver);
+    pageTitle.removeEventListener("mouseleave", onTitleLeave);
+  }
+  setTimeout(() => {
+    pageTitle = document.querySelector(".rm-title-display");
+    if (!pageTitle) return;
+    isHover = false;
+
+    pageTitle.addEventListener("mouseenter", onTitleOver);
+
+    pageTitle.addEventListener(
+      "mouseleave",
+      onTitleLeave
+      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
+    );
+  }, 500);
+}
+
+function onTitleOver(e) {
+  {
+    isHover = true;
+    setTimeout(async () => {
+      if (!isHover) return;
+      let tooltip = document.createElement("span");
+      e.target.style.position = "relative";
+      tooltip.classList.add("tooltiptext");
+      let prevTooltip = e.target.querySelector(".tooltiptext");
+      prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip);
+      let pageUid;
+      if (e.target.classList.contains("page")) {
+        pageUid = await getPageUidByTitle(e.target.innerText);
+      }
+      tooltip.innerText = await infoPage(pageUid);
+    }, 450);
+    //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
+  }
+}
+
+function onTitleLeave() {
+  isHover = false;
+}
+
+export function shortcutsListener() {
+  let shortcuts = document.querySelectorAll(".page");
+  shortcuts.forEach((s) => {
+    s.addEventListener("mouseenter", onTitleOver);
+    s.addEventListener("mouseleave", onTitleLeave);
   });
-  return { date: date, time: time };
-}
-
-function getChildrenStats(
-  tree,
-  newestTime = 0,
-  editUser = "",
-  c = 0,
-  w = 0,
-  b = 0,
-  task = { done: 0, todo: 0 }
-) {
-  for (let i = 0; i < tree.length; i++) {
-    let content = tree[i].string;
-    b++;
-    c += content.length;
-    if (displayWord) w += countWords(content);
-    let users = getUser(tree[i].uid);
-    if (content.includes("[[DONE]]")) {
-      task.done++;
-      task.todo++;
-    } else if (content.includes("[[TODO]]")) task.todo++;
-    if (tree[i].time > newestTime) {
-      newestTime = tree[i].time;
-      editUser = users.editUser;
-    }
-    if (tree[i].children) {
-      let r = getChildrenStats(tree[i].children, newestTime, editUser);
-      c += r.characters;
-      if (displayWord) w += r.words;
-      b += r.blocks;
-      task.done += r.done;
-      task.todo += r.todo;
-      newestTime = r.newestTime;
-      editUser = r.editUser;
-    }
-  }
-  return {
-    characters: c,
-    words: w,
-    blocks: b,
-    done: task.done,
-    todo: task.todo,
-    newestTime: newestTime,
-    editUser: editUser,
-  };
-}
-
-function getBlockStats(uid) {
-  let content = getBlockContentByUid(uid);
-  let wordCount = countWords(content);
-  return {
-    characters: content.length,
-    words: wordCount,
-  };
-}
-
-function countWords(str) {
-  str = str.replace(/(^\s*)|(\s*$)/gi, "");
-  str = str.replace(/[ ]{2,}/gi, " ");
-  str = str.replace(/\n /, "\n");
-  return str.split(" ").length;
-}
-
-function displayPercentage(a, b, mode) {
-  let percent = a / b;
-  if (mode === "green squares") {
-    const offSquare = "□";
-    const greenSquare = "🟩";
-    let left = "";
-    let right = "";
-    if (b <= 6) {
-      for (let i = 0; i < a; i++) {
-        left += greenSquare;
-      }
-      for (let i = 0; i < b - a; i++) {
-        right += offSquare;
-      }
-    } else {
-      percent *= 6;
-      if (percent === 6) left = "🟩🟩🟩🟩🟩🟩";
-      else if (percent > 5) {
-        left = "🟩🟩🟩🟩🟩";
-        right = "□";
-      } else if (percent > 4) {
-        left = "🟩🟩🟩🟩";
-        right = "□□";
-      } else if (percent > 3) {
-        left = "🟩🟩🟩";
-        right = "□□□";
-      } else if (percent > 2) {
-        left = "🟩🟩";
-        right = "□□□□";
-      } else if (percent > 1) {
-        left = "🟩";
-        right = "□□□□□";
-      } else {
-        right = "□□□□□□";
-      }
-    }
-    return left + right;
-  } else if (mode === "percent") {
-    percent = Math.trunc(percent * 100);
-    return `(${percent}%)`;
-  }
-}
-
-function getFormatedUserName(uid) {
-  let result;
-  let editName = getUser(uid);
-  displayEditName ? (result = editName + "\n") : (result = "");
-  return result;
-}
-
-function getFormatedDateStrings(uid, users, node) {
-  let result = "";
-  let dates = getDateStrings(uid);
-  let doNotDisplayCreateName = false;
-
-  result += `Created:\n${dates.c.date} ${dates.c.time}\n`;
-  if (displayEditName) result += `by ${users.createUser}\n`;
-  if (
-    node != "page" &&
-    (dates.c.date != dates.u.date ||
-      dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
-  ) {
-    result += `Updated:\n${dates.u.date} ${dates.u.time}\n`;
-  } else {
-    doNotDisplayCreateName = true;
-  }
-  if (
-    users.editUser != users.createUser &&
-    !doNotDisplayCreateName &&
-    displayEditName
-  )
-    result += `by ${users.editUser}\n`;
-  //result += "\n";
-  return result;
-}
-
-function getFormatedChildrenStats(uid, users, node) {
-  let result = "";
-  let tree = getTreeByUid(uid);
-  let bStats = getBlockStats(uid);
-
-  let bString = [];
-  if (node !== "page") {
-    if (displayChar) bString.push(bStats.characters + "c");
-    if (displayWord) bString.push(bStats.words + "w");
-    if (displayChar || displayWord) result += `\n• ${bString.join(" ")}`;
-  }
-  if (tree.children) {
-    let cStats = getChildrenStats(tree.children);
-    let cString = [];
-    if (node === "page") {
-      let newestTime = formatDateAndTime(cStats.newestTime);
-      let updateString = `Last updated block:\n${newestTime.date} ${newestTime.time}\n`;
-      if (displayEditName && cStats.editUser != users.createUser)
-        updateString += `by ${cStats.editUser}\n`;
-      result = updateString + result;
-    }
-    let nodeType;
-    node === "page" ? (nodeType = "blocks") : (nodeType = "children");
-    cString.push(`\n${cStats.blocks} ${nodeType} `);
-    if (displayChar) cString.push(`${cStats.characters}c`);
-    if (displayWord) cString.push(`${cStats.words}w`);
-    result += `${cString.join(" ")}`;
-    if (displayTODO && cStats.todo != 0) {
-      let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
-      result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
-    }
-  }
-  return result;
 }
 
 export function infoTooltip(mutations) {
@@ -240,7 +118,8 @@ export function infoTooltip(mutations) {
   ) {
     //let parent = target.parentNode.parentNode.parentNode.parentNode;
     let parent = target.closest(".rm-block-main");
-    let uid = parent.querySelector(".roam-block").id.slice(-9);
+    let uid = parent.querySelector(".roam-block")?.id.slice(-9);
+    if (!uid) uid = parent.querySelector("textarea").id.slice(-9);
     const tooltip = document.querySelector(".rm-bullet__tooltip");
     let users = getUser(uid);
 

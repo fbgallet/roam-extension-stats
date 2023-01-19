@@ -1,18 +1,13 @@
 import {
-  getBlockContentByUid,
-  getPageUidByTitle,
-  getTreeByUid,
-  processNotesInTree,
-} from "./utils";
-import {
-  addObserver,
+  addListeners,
+  addShortcutsListener,
+  connectObservers,
   disconnectObserver,
   infoPage,
-  infoTooltip,
+  onPageLoad,
+  removeListeners,
+  removeShortcutsListeners,
 } from "./observers";
-import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBlockUid";
-import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
-import normalizePageTitle from "roamjs-components/queries/normalizePageTitle";
 import { displayToast, displayTooltip } from "./components";
 
 export var displayEditName;
@@ -23,9 +18,7 @@ export var displayChar;
 export var displayWord;
 export var displayTODO;
 export var modeTODO;
-
-let pageTitle = undefined;
-let isHover;
+export var displayShortcutInfo;
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -136,63 +129,23 @@ const panelConfig = {
         },
       },
     },
+    {
+      id: "displayShortcut",
+      name: "Display Shortcuts Info",
+      description:
+        "Display page Info when hovering a page shortcut in the left sidebar:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayShortcutInfo = !displayShortcutInfo;
+          displayShortcutInfo
+            ? addShortcutsListener()
+            : removeShortcutsListeners();
+        },
+      },
+    },
   ],
 };
-
-function onPageLoad(e) {
-  // setTimeout(() => {
-  if (pageTitle) {
-    pageTitle.removeEventListener("mouseenter", onTitleOver);
-    pageTitle.removeEventListener("mouseleave", onTitleLeave);
-  }
-  setTimeout(() => {
-    pageTitle = document.querySelector(".rm-title-display");
-    if (!pageTitle) return;
-    isHover = false;
-
-    pageTitle.addEventListener("mouseenter", onTitleOver);
-
-    pageTitle.addEventListener(
-      "mouseleave",
-      onTitleLeave
-      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
-    );
-  }, 500);
-}
-
-function onTitleOver(e) {
-  {
-    isHover = true;
-    setTimeout(async () => {
-      if (!isHover) return;
-      let tooltip = document.createElement("span");
-      e.target.style.position = "relative";
-      tooltip.classList.add("tooltiptext");
-      let prevTooltip = e.target.querySelector(".tooltiptext");
-      prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip); // idem
-      let pageUid;
-      if (e.target.classList.contains("page")) {
-        //console.log(e.target.innerText);
-        pageUid = await getPageUidByTitle(e.target.innerText);
-        console.log(pageUid);
-      }
-      tooltip.innerText = await infoPage(pageUid);
-    }, 450);
-    //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
-  }
-}
-
-function onTitleLeave() {
-  isHover = false;
-}
-
-function shortcutsListener() {
-  let shortcuts = document.querySelectorAll(".page");
-  shortcuts.forEach((s) => {
-    s.addEventListener("mouseenter", onTitleOver);
-    s.addEventListener("mouseleave", onTitleLeave);
-  });
-}
 
 export default {
   onload: async ({ extensionAPI }) => {
@@ -219,8 +172,11 @@ export default {
     if (extensionAPI.settings.get("modeTODO") === null)
       await extensionAPI.settings.set("modeTODO", "(50%)");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
+    if (extensionAPI.settings.get("displayShortcut") === null)
+      await extensionAPI.settings.set("displayShortcut", true);
+    displayShortcutInfo = extensionAPI.settings.get("displayShortcut");
 
-    extensionAPI.settings.panel.create(panelConfig);
+    await extensionAPI.settings.panel.create(panelConfig);
 
     window.roamAlphaAPI.ui.commandPalette.addCommand({
       label: "Get Page Info",
@@ -258,30 +214,16 @@ export default {
     //   });
     // }
 
-    addObserver(document.getElementsByClassName("roam-app")[0], infoTooltip, {
-      childList: false,
-      subtree: true,
-      attributeFilter: ["class"],
-    });
-
     onPageLoad();
-    window.addEventListener("popstate", onPageLoad); // popstate ? load ?
-    shortcutsListener();
+    connectObservers();
+    addListeners();
 
     console.log("Block Info extension loaded.");
     //return;
   },
   onunload: () => {
     disconnectObserver();
-    let pageTitle = document.querySelector(".rm-title-display");
-    pageTitle.removeEventListener("mouseenter", onTitleOver);
-    pageTitle.removeEventListener("mouseleave", onTitleLeave);
-    window.removeEventListener("popstate", onPageLoad);
-    let shortcuts = document.querySelectorAll(".page");
-    shortcuts.forEach((s) => {
-      s.removeEventListener("mouseenter", onTitleOver);
-      s.removeEventListener("mouseleave", onTitleLeave);
-    });
+    removeListeners();
     // window.roamAlphaAPI.ui.commandPalette.removeCommand({
     //   label: "Footnotes: Reorder footnotes on current page",
     // });
