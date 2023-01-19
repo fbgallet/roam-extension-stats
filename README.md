@@ -2,6 +2,8 @@
 
 ### Get a quick overview of several informations on any block or page (🆕 in v.2) and their children, directly in the native bullet tooltip
 
+Update to v.2: January 19th, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
+
 ![blockInfov2](https://user-images.githubusercontent.com/74436347/213473172-2110b65b-09da-4891-84cc-862da3f25473.gif)
 
 Just over any bullet, or page title, or page shortcut in the left sidebar to see the following info (info between brackets are optional):
