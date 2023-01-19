@@ -8,7 +8,7 @@ import {
   removeListeners,
   removeShortcutsListeners,
 } from "./observers";
-import { displayToast, displayTooltip } from "./components";
+import { displayPageInfo, displayToast, displayTooltip } from "./components";
 
 export var displayEditName;
 export var dateFormat;
@@ -203,7 +203,7 @@ export default {
     window.roamAlphaAPI.ui.commandPalette.addCommand({
       label: "Get Page Info",
       callback: async () => {
-        displayToast(await infoPage());
+        displayPageInfo(await infoPage());
       },
     });
 
