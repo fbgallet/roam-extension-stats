@@ -16,11 +16,10 @@ Just over any bullet, or page title, or page shortcut in the left sidebar to see
 - Children blocks count, [Character] and [word] count in children blocks
 - DONE/TODO ratio and percentage (or progress bar with 6 boxes: "🟩🟩🟩□□□" means more that 50%, less than 66%)
 
+---
 Do you think other information could be useful? Don't hesitate to let me know!
 
----
-
-Future developments:
+Future possible developments:
 
 - tooltip for other elements like dates in the calendar ?
 - info on referenes in the page and linked references ?
