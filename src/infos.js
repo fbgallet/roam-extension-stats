@@ -6,6 +6,7 @@ import {
   displayWord,
   localDateFormat,
   modeTODO,
+  timeFormat,
 } from ".";
 import {
   getBlockContentByUid,
@@ -34,10 +35,35 @@ function formatDateAndTime(timestamp) {
     // month: "numeric",
     // day: "numeric",
   });
-  let time = new Date(timestamp).toLocaleTimeString(localDateFormat, {
-    hour12: false,
-  });
+  let formatedTime = new Date(timestamp).toLocaleTimeString(
+    "en-US",
+    getTimeFormatOption(timeFormat)
+  );
+  let time;
+  timeFormat == "~H AM/PM"
+    ? (time = "~" + formatedTime)
+    : (time = formatedTime);
   return { date: date, time: time };
+}
+
+function getTimeFormatOption(choice) {
+  switch (choice) {
+    case "HH:MM:SS":
+      return { hour12: false };
+    case "H:MM:SS AM/PM":
+      return {
+        hour12: true,
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+      };
+    case "HH:MM":
+      return { hour12: false, hour: "2-digit", minute: "2-digit" };
+    case "H:MM AM/PM":
+      return { timeStyle: "short", hour: "2-digit", minute: "2-digit" };
+    case "~H AM/PM":
+      return { hour: "numeric", hourCycle: "h12" };
+  }
 }
 
 function getChildrenStats(
@@ -156,14 +182,14 @@ export function getFormatedDateStrings(uid, users, node) {
   let dates = getDateStrings(uid);
   let doNotDisplayCreateName = false;
 
-  result += `Created:\n${dates.c.date} ${dates.c.time}\n`;
+  result += `Created:\n${dates.c.date}, ${dates.c.time}\n`;
   if (displayEditName) result += `by ${users.createUser}\n`;
   if (
     node != "page" &&
     (dates.c.date != dates.u.date ||
       dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
   ) {
-    result += `Updated:\n${dates.u.date} ${dates.u.time}\n`;
+    result += `Updated:\n${dates.u.date}, ${dates.u.time}\n`;
   } else {
     doNotDisplayCreateName = true;
   }
@@ -193,7 +219,7 @@ export function getFormatedChildrenStats(uid, users, node) {
     let cString = [];
     if (node === "page") {
       let newestTime = formatDateAndTime(cStats.newestTime);
-      let updateString = `Last updated block:\n${newestTime.date} ${newestTime.time}\n`;
+      let updateString = `Last updated block:\n${newestTime.date}, ${newestTime.time}\n`;
       if (displayEditName && cStats.editUser != users.createUser)
         updateString += `by ${cStats.editUser}\n`;
       result = updateString + result;

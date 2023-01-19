@@ -13,6 +13,7 @@ import { displayToast, displayTooltip } from "./components";
 export var displayEditName;
 export var dateFormat;
 var localDate;
+export var timeFormat;
 export var localDateFormat;
 export var displayChar;
 export var displayWord;
@@ -60,7 +61,7 @@ const panelConfig = {
     {
       id: "dateFormat",
       name: "Date format",
-      description: "Select the way dates are displayed",
+      description: "Select how dates are displayed",
       action: {
         type: "select",
         items: ["short", "medium", "long", "full"],
@@ -81,6 +82,24 @@ const panelConfig = {
           localDate
             ? (localDateFormat = undefined)
             : (localDateFormat = "en-US");
+        },
+      },
+    },
+    {
+      id: "timeFormat",
+      name: "Time format",
+      description: "Select how time is displayed",
+      action: {
+        type: "select",
+        items: [
+          "HH:MM:SS",
+          "HH:MM:SS AM/PM",
+          "HH:MM",
+          "HH:MM AM/PM",
+          "~H AM/PM",
+        ],
+        onChange: (evt) => {
+          timeFormat = evt;
         },
       },
     },
@@ -160,6 +179,9 @@ export default {
     localDateFormat = extensionAPI.settings.get("localDate")
       ? (localDateFormat = undefined)
       : (localDateFormat = "en-US");
+    if (extensionAPI.settings.get("timeFormat") === null)
+      await extensionAPI.settings.set("timeFormat", "HH:MM");
+    timeFormat = extensionAPI.settings.get("timeFormat");
     if (extensionAPI.settings.get("displayCharacters") === null)
       await extensionAPI.settings.set("displayCharacters", true);
     displayChar = extensionAPI.settings.get("displayCharacters");
