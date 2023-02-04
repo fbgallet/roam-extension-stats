@@ -2,6 +2,7 @@ import {
   dateFormat,
   displayChar,
   displayEditName,
+  displayREFS,
   displayTODO,
   displayWord,
   localDateFormat,
@@ -10,6 +11,7 @@ import {
 } from ".";
 import {
   getBlockContentByUid,
+  getBlocksIncludingRef,
   getBlockTimes,
   getTreeByUid,
   getUser,
@@ -27,7 +29,7 @@ function getDateStrings(uid) {
   };
 }
 
-function formatDateAndTime(timestamp) {
+export function formatDateAndTime(timestamp) {
   let date = new Date(timestamp).toLocaleDateString(localDateFormat, {
     // default: "en-US"
     dateStyle: dateFormat,
@@ -44,6 +46,14 @@ function formatDateAndTime(timestamp) {
     ? (time = "~" + formatedTime)
     : (time = formatedTime);
   return { date: date, time: time };
+}
+
+export function getFormatedDay(date) {
+  return new Date(date).toLocaleDateString(localDateFormat, {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  });
 }
 
 function getTimeFormatOption(choice) {
@@ -64,6 +74,11 @@ function getTimeFormatOption(choice) {
     case "~H AM/PM":
       return { hour: "numeric", hourCycle: "h12" };
   }
+}
+
+export function getYesterdayDate(date = null) {
+  if (!date) date = new Date();
+  return new Date(date.getTime() - 24 * 60 * 60 * 1000);
 }
 
 function getChildrenStats(
@@ -203,9 +218,10 @@ export function getFormatedDateStrings(uid, users, node) {
   return result;
 }
 
-export function getFormatedChildrenStats(uid, users, node) {
+export function getFormatedChildrenStats(uid, users, node, withDate = true) {
   let result = "";
   let tree = getTreeByUid(uid);
+  if (!tree) return null;
   let bStats = getBlockStats(uid);
 
   let bString = [];
@@ -217,7 +233,7 @@ export function getFormatedChildrenStats(uid, users, node) {
   if (tree.children) {
     let cStats = getChildrenStats(tree.children);
     let cString = [];
-    if (node === "page") {
+    if (node === "page" && withDate) {
       let newestTime = formatDateAndTime(cStats.newestTime);
       let updateString = `Last updated block:\n${newestTime.date}, ${newestTime.time}\n`;
       if (displayEditName && cStats.editUser != users.createUser)
@@ -233,6 +249,21 @@ export function getFormatedChildrenStats(uid, users, node) {
     if (displayTODO && cStats.todo != 0) {
       let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
       result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
+    }
+  }
+  if (displayREFS) {
+    let refs = getBlocksIncludingRef(uid);
+    let refsNb = refs.length;
+    if (refsNb > 0) {
+      let newestTime = 0;
+      let updateTime;
+      refs.forEach((ref) => {
+        updateTime = getBlockTimes(ref[0]).update;
+        if (updateTime > newestTime) newestTime = updateTime;
+      });
+      let refTime = formatDateAndTime(newestTime);
+      result += `\n${refsNb} linked reference(s)
+      Last ref.: ${refTime.date}`;
     }
   }
   return result;

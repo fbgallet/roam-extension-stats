@@ -2,12 +2,14 @@ export const uidRegex = /\(\([^\)]{9}\)\)/g;
 export const pageRegex = /\[\[.*\]\]/g; // very simplified, not recursive...
 
 export function getTreeByUid(uid) {
-  if (uid)
-    return window.roamAlphaAPI.q(`[:find (pull ?page
-                     [:block/uid :block/string :block/children :block/refs :edit/time
-                        {:block/children ...} ])
-                      :where [?page :block/uid "${uid}"]  ]`)[0][0];
-  else return null;
+  if (uid) {
+    let result = window.roamAlphaAPI.q(`[:find (pull ?page
+      [:block/uid :block/string :block/children :block/refs :edit/time
+         {:block/children ...} ])
+       :where [?page :block/uid "${uid}"]  ]`);
+    if (result.length != 0) return result[0][0];
+    else return null;
+  } else return null;
 }
 
 export function getBlockContentByUid(uid) {
@@ -37,7 +39,18 @@ export async function getMainPageUid() {
 
 export function getPageUidByTitle(title) {
   let result = window.roamAlphaAPI.pull("[:block/uid]", [":node/title", title]);
-  return result[":block/uid"]; //
+  if (result) return result[":block/uid"];
+  else return null;
+}
+
+export function getBlocksIncludingRef(uid) {
+  return window.roamAlphaAPI.q(
+    `[:find ?u ?s
+         :where [?r :block/uid ?u] 
+              [?r :block/refs ?b]
+                [?r :block/string ?s]
+            [?b :block/uid "${uid}"]]`
+  );
 }
 
 function getFirstChildUid(uid) {

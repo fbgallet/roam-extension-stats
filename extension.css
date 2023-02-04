@@ -16,19 +16,19 @@
 .tooltiptext {
   visibility: hidden;
   width: auto;
-  background-color: var(--bc-tooltip__content, #394b59);
-  color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87));
+  background-color: var(--bc-tooltip__content, #394b59) !important;
+  color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87)) !important;
   font-size: var(--fs-tooltip__content, 14px) !important;
-  font-family: var(--ff-app__div, inherit);
+  font-family: var(--ff-app__div, inherit) !important;
   text-align: left;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1.5rem;
   border-radius: 3px;
   border: var(--bt-tooltip, 1px solid gray);
   padding: 10px 12px;
   position: absolute;
   top: 110%;
-  left: 10px;
+  left: 0;
   z-index: 99;
   opacity: 0;
 }
@@ -45,11 +45,17 @@
 }
 
 .rm-title-display:hover .tooltiptext,
-.page:hover .tooltiptext {
-  transition-delay: 0.5s;
+.page:hover .tooltiptext,
+.rm-left-sidebar__daily-notes:hover .tooltiptext {
+  transition-delay: 1s !important;
   visibility: visible;
   opacity: 1;
 }
+
+/* .rm-bullet__inner:hover .rm-bullet__tooltip {
+  transition-delay: 2s !important;
+  opacity: 1 !important;
+} */
 
 /* .rm-title-display:hover::after {
   content: "🛈 Ctrl or i";

@@ -1,6 +1,12 @@
 import { getMainPageUid, getPageUidByTitle, getUser } from "./utils";
-import { getFormatedChildrenStats, getFormatedDateStrings } from "./infos";
-import { displayShortcutInfo } from ".";
+import {
+  formatDateAndTime,
+  getFormatedChildrenStats,
+  getFormatedDateStrings,
+  getFormatedDay,
+  getYesterdayDate,
+} from "./infos";
+import { displayShortcutInfo, nbDaysBefore, tooltipDelay } from ".";
 
 var runners = {
   menuItems: [],
@@ -8,27 +14,33 @@ var runners = {
 };
 let pageTitle = undefined;
 let isHover;
+let dailyLogPageTitles = [];
 
 export function connectObservers() {
-  addObserver(document.getElementsByClassName("roam-app")[0], infoTooltip, {
-    childList: false,
-    subtree: true,
-    attributeFilter: ["class"],
-  });
+  addObserver(
+    document.getElementsByClassName("roam-app")[0],
+    infoTooltip,
+    {
+      childList: false,
+      subtree: true,
+      attributeFilter: ["class"],
+    },
+    "tooltips"
+  );
 }
 
-function addObserver(element, callback, options) {
+function addObserver(element, callback, options, name) {
   let myObserver = new MutationObserver(callback);
   myObserver.observe(element, options);
 
-  runners["observers"] = [myObserver];
+  runners[name] = [myObserver];
 }
-export function disconnectObserver() {
-  // loop through observers and disconnect
-  for (let index = 0; index < runners["observers"].length; index++) {
-    const element = runners["observers"][index];
-    element.disconnect();
-  }
+export function disconnectObserver(name) {
+  if (runners[name])
+    for (let index = 0; index < runners[name].length; index++) {
+      const element = runners[name][index];
+      element.disconnect();
+    }
 }
 
 export function addListeners() {
@@ -41,7 +53,7 @@ export function addShortcutsListener() {
 }
 
 export function removeListeners() {
-  let pageTitle = document.querySelector(".rm-title-display");
+  pageTitle = document.querySelector(".rm-title-display");
   pageTitle.removeEventListener("mouseenter", onTitleOver);
   pageTitle.removeEventListener("mouseleave", onTitleLeave);
   window.removeEventListener("popstate", onPageLoad);
@@ -54,6 +66,19 @@ export function removeShortcutsListeners() {
     s.removeEventListener("mouseenter", onTitleOver);
     s.removeEventListener("mouseleave", onTitleLeave);
   });
+  let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
+  dailyNotes.addEventListener("mouseenter", onTitleOver);
+  dailyNotes.addEventListener("mouseleave", onTitleLeave);
+}
+
+export function removeDailyLogListeners() {
+  if (dailyLogPageTitles.length != 0) {
+    dailyLogPageTitles.forEach((title) => {
+      title.removeEventListener("mouseenter", onTitleOver);
+      title.removeEventListener("mouseleave", onTitleLeave);
+    });
+    dailyLogPageTitles = [];
+  }
 }
 
 export function onPageLoad(e) {
@@ -63,24 +88,53 @@ export function onPageLoad(e) {
     pageTitle.removeEventListener("mouseleave", onTitleLeave);
   }
   setTimeout(() => {
-    pageTitle = document.querySelector(".rm-title-display");
-    if (!pageTitle) return;
+    let isLogPage = document.querySelector(".roam-log-container");
     isHover = false;
+    if (isLogPage) {
+      let titles = document.querySelectorAll(".rm-title-display");
+      dailyLogPageTitles = titles;
+      titles.forEach((title) => {
+        title.addEventListener("mouseenter", onTitleOver);
+        title.addEventListener("mouseleave", onTitleLeave);
+      });
+      addObserver(
+        document.getElementsByClassName("roam-log-container")[0],
+        dailyLogObserver,
+        {
+          childList: true,
+          subtree: false,
+        },
+        "logs"
+      );
+    } else {
+      removeDailyLogListeners();
+      disconnectObserver("logs");
+      pageTitle = document.querySelector(".rm-title-display");
+      if (!pageTitle) return;
 
-    pageTitle.addEventListener("mouseenter", onTitleOver);
+      pageTitle.addEventListener("mouseenter", onTitleOver);
 
-    pageTitle.addEventListener(
-      "mouseleave",
-      onTitleLeave
-      //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
-    );
+      pageTitle.addEventListener(
+        "mouseleave",
+        onTitleLeave
+        //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
+      );
+    }
   }, 500);
+}
+
+function dailyLogObserver(e) {
+  let titles = document.querySelectorAll(".rm-title-display");
+  dailyLogPageTitles = titles;
+  titles[titles.length - 1].addEventListener("mouseenter", onTitleOver);
+  titles[titles.length - 1].addEventListener("mouseleave", onTitleLeave);
 }
 
 function onTitleOver(e) {
   {
     isHover = true;
     setTimeout(async () => {
+      let dailyNotesHover = false;
       if (!isHover) return;
       let tooltip = document.createElement("span");
       e.target.style.position = "relative";
@@ -88,17 +142,32 @@ function onTitleOver(e) {
       let prevTooltip = e.target.querySelector(".tooltiptext");
       prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip);
       let pageUid;
-      if (e.target.classList.contains("page")) {
+      // hover 'Daily Notes'
+      if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
+        dailyNotesHover = true;
+        pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
+        //tooltip.innerText = await infoDailyPage(pageUid);
+        //return;
+        // hover Shortcuts in right sidebar or daily notes title in log
+      } else if (
+        e.target.classList.contains("page") ||
+        (document.querySelector(".roam-log-container") &&
+          e.target.classList.contains("rm-title-display"))
+      ) {
         pageUid = await getPageUidByTitle(e.target.innerText);
       }
-      tooltip.innerText = await infoPage(pageUid);
-    }, 450);
+      dailyNotesHover
+        ? (tooltip.innerText = await infoDailyPage(pageUid))
+        : (tooltip.innerText = await infoPage(pageUid));
+    }, tooltipDelay);
     //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
   }
 }
 
 function onTitleLeave() {
   isHover = false;
+  let tooltip = document.querySelector(".tooltiptext");
+  if (tooltip) tooltip.remove();
 }
 
 export function shortcutsListener() {
@@ -107,6 +176,9 @@ export function shortcutsListener() {
     s.addEventListener("mouseenter", onTitleOver);
     s.addEventListener("mouseleave", onTitleLeave);
   });
+  let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
+  dailyNotes.addEventListener("mouseenter", onTitleOver);
+  dailyNotes.addEventListener("mouseleave", onTitleLeave);
 }
 
 export function infoTooltip(mutations) {
@@ -116,7 +188,6 @@ export function infoTooltip(mutations) {
     //target.firstChild.className === "rm-bullet__inner" // does the issue come from here ?
     target.querySelector(".rm-bullet__inner")
   ) {
-    //let parent = target.parentNode.parentNode.parentNode.parentNode;
     let parent = target.closest(".rm-block-main");
     let uid = parent.querySelector(".roam-block")?.id.slice(-9);
     if (!uid) uid = parent.querySelector("textarea").id.slice(-9);
@@ -138,4 +209,24 @@ export async function infoPage(pageUid) {
     users,
     "page"
   )}${getFormatedChildrenStats(pageUid, users, "page")}`;
+}
+
+async function infoDailyPage(pageUid) {
+  let users = getUser(pageUid);
+  let result = `Today: ${getFormatedDay(new Date())}${getFormatedChildrenStats(
+    pageUid,
+    users,
+    "page",
+    false
+  )}`;
+  let previousDayDate = new Date();
+  for (let i = 0; i < nbDaysBefore; i++) {
+    previousDayDate = getYesterdayDate(previousDayDate);
+    let previousDayUid = await window.roamAlphaAPI.util.dateToPageUid(
+      previousDayDate
+    );
+    let stats = getFormatedChildrenStats(previousDayUid, users, "page", false);
+    if (stats) result += `\n\n${getFormatedDay(previousDayDate)}${stats}`;
+  }
+  return result;
 }

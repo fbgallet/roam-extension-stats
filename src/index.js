@@ -5,6 +5,7 @@ import {
   disconnectObserver,
   infoPage,
   onPageLoad,
+  removeDailyLogListeners,
   removeListeners,
   removeShortcutsListeners,
 } from "./observers";
@@ -20,6 +21,9 @@ export var displayWord;
 export var displayTODO;
 export var modeTODO;
 export var displayShortcutInfo;
+export var nbDaysBefore;
+export var tooltipDelay;
+export var displayREFS;
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -35,18 +39,6 @@ function getModeTodo(mode) {
 const panelConfig = {
   tabTitle: "Blocks infos",
   settings: [
-    // INPUT example
-    // {
-    //   id: "footnotesHeader",
-    //   name: "Footnotes header",
-    //   description: "Text inserted as the parent block of footnotes:",
-    //   action: {
-    //     type: "input",
-    //     onChange: (evt) => {
-    //       //   footnotesTag = evt.target.value;
-    //     },
-    //   },
-    // },
     {
       id: "displayName",
       name: "User Name",
@@ -149,6 +141,17 @@ const panelConfig = {
       },
     },
     {
+      id: "displayREFS",
+      name: "References count",
+      description: "Display linked reference count and last update date:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayREFS = !displayREFS;
+        },
+      },
+    },
+    {
       id: "displayShortcut",
       name: "Display Shortcuts Info",
       description:
@@ -163,13 +166,38 @@ const panelConfig = {
         },
       },
     },
+    {
+      id: "nbDaysBefore",
+      name: "Number of days before",
+      description:
+        "Display stats of how many previous days when hovering 'Daily Notes':",
+      action: {
+        type: "select",
+        items: ["None", "1", "2", "3", "4", "5", "6"],
+        onChange: (evt) => {
+          nbDaysBefore = parseInt(evt);
+        },
+      },
+    },
+    {
+      id: "delay",
+      name: "Tooltip display delay",
+      description:
+        "Delay before the tooltip is displayed when hovering over a page title/shortcut (in ms):",
+      action: {
+        type: "input",
+        onChange: (evt) => {
+          tooltipDelay = evt.target.value;
+        },
+      },
+    },
   ],
 };
 
 export default {
   onload: async ({ extensionAPI }) => {
     if (extensionAPI.settings.get("displayName") === null)
-      await extensionAPI.settings.set("displayName", true);
+      await extensionAPI.settings.set("displayName", false);
     displayEditName = extensionAPI.settings.get("displayName");
     if (extensionAPI.settings.get("dateFormat") === null)
       await extensionAPI.settings.set("dateFormat", "short");
@@ -194,9 +222,18 @@ export default {
     if (extensionAPI.settings.get("modeTODO") === null)
       await extensionAPI.settings.set("modeTODO", "(50%)");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
+    if (extensionAPI.settings.get("displayREFS") === null)
+      await extensionAPI.settings.set("displayREFS", true);
+    displayREFS = extensionAPI.settings.get("displayREFS");
     if (extensionAPI.settings.get("displayShortcut") === null)
       await extensionAPI.settings.set("displayShortcut", true);
     displayShortcutInfo = extensionAPI.settings.get("displayShortcut");
+    if (extensionAPI.settings.get("nbDaysBefore") === null)
+      await extensionAPI.settings.set("nbDaysBefore", 2);
+    nbDaysBefore = extensionAPI.settings.get("nbDaysBefore");
+    if (extensionAPI.settings.get("delay") === null)
+      await extensionAPI.settings.set("delay", 800);
+    tooltipDelay = extensionAPI.settings.get("delay");
 
     await extensionAPI.settings.panel.create(panelConfig);
 
@@ -244,8 +281,10 @@ export default {
     //return;
   },
   onunload: () => {
-    disconnectObserver();
+    disconnectObserver("tooltips");
+    disconnectObserver("logs");
     removeListeners();
+    removeDailyLogListeners();
     // window.roamAlphaAPI.ui.commandPalette.removeCommand({
     //   label: "Footnotes: Reorder footnotes on current page",
     // });
