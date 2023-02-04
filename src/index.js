@@ -204,7 +204,7 @@ export default {
     dateFormat = extensionAPI.settings.get("dateFormat");
     if (extensionAPI.settings.get("localDate") === null)
       await extensionAPI.settings.set("localDate", true);
-    localDateFormat = extensionAPI.settings.get("localDate")
+    localDate = extensionAPI.settings.get("localDate")
       ? (localDateFormat = undefined)
       : (localDateFormat = "en-US");
     if (extensionAPI.settings.get("timeFormat") === null)
