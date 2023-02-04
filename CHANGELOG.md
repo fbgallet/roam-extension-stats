@@ -1,3 +1,13 @@
+## v.3 (February 4th, 2023)
+### New features
+  - Info on 'Daily notes' up to 6 days before
+  - Linked references count and date of the last updated one
+### Updates
+  - Option for tooltip display delay (for pages only)
+### Fixes
+  - Works properly on daily notes pages title in daily log
+  - Small issue in shortcut display on disabling the extension. Now, tooltip DOM element is always removed when no more displayed
+
 ## v.2 (January 19th, 2023)
 ### New features
   - Page info (on title over or shortcut over or via command palette)
