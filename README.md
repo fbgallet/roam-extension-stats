@@ -1,4 +1,4 @@
-# Block & Page Info v.2
+# Block & Page Info v.3
 
 ### Get a quick overview of several informations on any block or page (since v.2) and their children, directly in the native bullet tooltip
 
