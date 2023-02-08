@@ -1,4 +1,4 @@
-## v.3 (February 4th, 2023)
+## v.3 (February 8th, 2023)
 ### New features
   - Info on 'Daily notes' up to 6 days before
   - Linked references count and date of the last updated one
