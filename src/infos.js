@@ -12,6 +12,7 @@ import {
 import {
   getBlockContentByUid,
   getBlocksIncludingRef,
+  getBlocksIncludingRefByTitle,
   getBlockTimes,
   getTreeByUid,
   getUser,
@@ -192,7 +193,7 @@ function getFormatedUserName(uid) {
   return result;
 }
 
-export function getFormatedDateStrings(uid, users, node) {
+export function getFormatedDateStrings(uid, users, node = "block") {
   let result = "";
   let dates = getDateStrings(uid);
   let doNotDisplayCreateName = false;
@@ -200,7 +201,7 @@ export function getFormatedDateStrings(uid, users, node) {
   result += `Created:\n${dates.c.date}, ${dates.c.time}\n`;
   if (displayEditName) result += `by ${users.createUser}\n`;
   if (
-    node != "page" &&
+    node === "block" &&
     (dates.c.date != dates.u.date ||
       dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
   ) {
@@ -218,14 +219,19 @@ export function getFormatedDateStrings(uid, users, node) {
   return result;
 }
 
-export function getFormatedChildrenStats(uid, users, node, withDate = true) {
+export function getFormatedChildrenStats(
+  uid,
+  users,
+  node = "block",
+  withDate = true
+) {
   let result = "";
   let tree = getTreeByUid(uid);
   if (!tree) return null;
   let bStats = getBlockStats(uid);
 
   let bString = [];
-  if (node !== "page") {
+  if (node === "block") {
     if (displayChar) bString.push(bStats.characters + "c");
     if (displayWord) bString.push(bStats.words + "w");
     if (displayChar || displayWord) result += `\n• ${bString.join(" ")}`;
@@ -233,7 +239,7 @@ export function getFormatedChildrenStats(uid, users, node, withDate = true) {
   if (tree.children) {
     let cStats = getChildrenStats(tree.children);
     let cString = [];
-    if (node === "page" && withDate) {
+    if (node !== "block" && withDate) {
       let newestTime = formatDateAndTime(cStats.newestTime);
       let updateString = `Last updated block:\n${newestTime.date}, ${newestTime.time}\n`;
       if (displayEditName && cStats.editUser != users.createUser)
@@ -241,7 +247,7 @@ export function getFormatedChildrenStats(uid, users, node, withDate = true) {
       result = updateString + result;
     }
     let nodeType;
-    node === "page" ? (nodeType = "blocks") : (nodeType = "children");
+    node !== "block" ? (nodeType = "blocks") : (nodeType = "children");
     cString.push(`\n${cStats.blocks} ${nodeType} `);
     if (displayChar) cString.push(`${cStats.characters}c`);
     if (displayWord) cString.push(`${cStats.words}w`);
@@ -252,18 +258,24 @@ export function getFormatedChildrenStats(uid, users, node, withDate = true) {
     }
   }
   if (displayREFS) {
-    let refs = getBlocksIncludingRef(uid);
+    let refs;
+    node === "block"
+      ? (refs = getBlocksIncludingRef(uid))
+      : (refs = getBlocksIncludingRefByTitle(node));
     let refsNb = refs.length;
     if (refsNb > 0) {
       let newestTime = 0;
       let updateTime;
       refs.forEach((ref) => {
-        updateTime = getBlockTimes(ref[0]).update;
+        let refUid;
+        node === "block" ? (refUid = ref[0]) : (refUid = ref[0].uid);
+        updateTime = getBlockTimes(refUid).update;
         if (updateTime > newestTime) newestTime = updateTime;
       });
       let refTime = formatDateAndTime(newestTime);
-      result += `\n${refsNb} linked reference(s)
-      Last ref.: ${refTime.date}`;
+      result += `\n`;
+      if (node !== "block") result += `${refsNb} linked ref\n`;
+      result += `Last ref: ${refTime.date}`;
     }
   }
   return result;

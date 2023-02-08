@@ -120,7 +120,7 @@ export function onPageLoad(e) {
         //document.removeEventListener("keydown", ctrlDown /*, { once: true }*/);
       );
     }
-  }, 500);
+  }, 1000);
 }
 
 function dailyLogObserver(e) {
@@ -136,6 +136,7 @@ function onTitleOver(e) {
     setTimeout(async () => {
       let dailyNotesHover = false;
       if (!isHover) return;
+      let title = e.target.firstChild.textContent;
       let tooltip = document.createElement("span");
       e.target.style.position = "relative";
       tooltip.classList.add("tooltiptext");
@@ -146,8 +147,6 @@ function onTitleOver(e) {
       if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
         dailyNotesHover = true;
         pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
-        //tooltip.innerText = await infoDailyPage(pageUid);
-        //return;
         // hover Shortcuts in right sidebar or daily notes title in log
       } else if (
         e.target.classList.contains("page") ||
@@ -157,8 +156,8 @@ function onTitleOver(e) {
         pageUid = await getPageUidByTitle(e.target.innerText);
       }
       dailyNotesHover
-        ? (tooltip.innerText = await infoDailyPage(pageUid))
-        : (tooltip.innerText = await infoPage(pageUid));
+        ? (tooltip.innerText = await infoDailyPage(pageUid, pageUid))
+        : (tooltip.innerText = await infoPage(pageUid, title));
     }, tooltipDelay);
     //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
   }
@@ -184,9 +183,10 @@ export function shortcutsListener() {
 export function infoTooltip(mutations) {
   let target = mutations[0].target;
   if (
-    target.classList.contains("bp3-popover-open") &&
-    //target.firstChild.className === "rm-bullet__inner" // does the issue come from here ?
-    target.querySelector(".rm-bullet__inner")
+    //  target.classList.contains("bp3-popover-open") &&
+    target.className === "bp3-popover-target bp3-popover-open" &&
+    (target.firstChild.className === "rm-bullet__inner" ||
+      target.firstChild.className === "rm-bullet__inner--user-icon")
   ) {
     let parent = target.closest(".rm-block-main");
     let uid = parent.querySelector(".roam-block")?.id.slice(-9);
@@ -200,15 +200,15 @@ export function infoTooltip(mutations) {
   }
 }
 
-export async function infoPage(pageUid) {
+export async function infoPage(pageUid, title) {
   if (!pageUid) pageUid = await getMainPageUid();
   let users = getUser(pageUid);
 
   return `${getFormatedDateStrings(
     pageUid,
     users,
-    "page"
-  )}${getFormatedChildrenStats(pageUid, users, "page")}`;
+    title
+  )}${getFormatedChildrenStats(pageUid, users, title)}`;
 }
 
 async function infoDailyPage(pageUid) {
@@ -216,7 +216,7 @@ async function infoDailyPage(pageUid) {
   let result = `Today: ${getFormatedDay(new Date())}${getFormatedChildrenStats(
     pageUid,
     users,
-    "page",
+    pageUid,
     false
   )}`;
   let previousDayDate = new Date();
@@ -225,8 +225,13 @@ async function infoDailyPage(pageUid) {
     let previousDayUid = await window.roamAlphaAPI.util.dateToPageUid(
       previousDayDate
     );
-    let stats = getFormatedChildrenStats(previousDayUid, users, "page", false);
-    if (stats) result += `\n\n${getFormatedDay(previousDayDate)}${stats}`;
+    let stats = getFormatedChildrenStats(
+      previousDayUid,
+      users,
+      window.roamAlphaAPI.util.dateToPageTitle(previousDayDate),
+      false
+    );
+    if (stats) result += `\n_____\n${getFormatedDay(previousDayDate)}${stats}`;
   }
   return result;
 }

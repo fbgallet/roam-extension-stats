@@ -18,18 +18,19 @@
   width: auto;
   background-color: var(--bc-tooltip__content, #394b59) !important;
   color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87)) !important;
-  font-size: var(--fs-tooltip__content, 14px) !important;
+  font-size: var(--fs-tooltip__content, 12px) !important;
   font-family: var(--ff-app__div, inherit) !important;
   text-align: left;
-  font-weight: 300;
+  font-weight: 300 !important;
   line-height: 1.5rem;
   border-radius: 3px;
   border: var(--bt-tooltip, 1px solid gray);
   padding: 10px 12px;
+  margin-left: 5px;
   position: absolute;
   top: 110%;
   left: 0;
-  z-index: 99;
+  z-index: 999;
   opacity: 0;
 }
 
@@ -52,10 +53,15 @@
   opacity: 1;
 }
 
-/* .rm-bullet__inner:hover .rm-bullet__tooltip {
-  transition-delay: 2s !important;
-  opacity: 1 !important;
-} */
+.rm-bullet__tooltip {
+  background-color: var(--bc-tooltip__content, #394b59) !important;
+  color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87)) !important;
+  font-size: var(--fs-tooltip__content, 12px) !important;
+  font-family: var(--ff-app__div, inherit) !important;
+  text-align: left;
+  font-weight: 300;
+  line-height: 1.5rem;
+}
 
 /* .rm-title-display:hover::after {
   content: "🛈 Ctrl or i";
