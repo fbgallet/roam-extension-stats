@@ -3,8 +3,9 @@
   - Info on 'Daily notes' up to 6 days before
   - Linked references count and date of the last updated one
 ### Updates
-  - Option for tooltip display delay (for pages only)
+  - Option for tooltip display delay (not available for block bullet tooltip)
 ### Fixes
+  - Bullet tooltip was not working if 'All edit icons' Roam setting was enabled
   - Works properly on daily notes pages title in daily log
   - Small issue in shortcut display on disabling the extension. Now, tooltip DOM element is always removed when no more displayed
 
