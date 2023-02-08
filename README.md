@@ -2,7 +2,7 @@
 
 ### Get a quick overview of several informations on any block or page (since v.2) and their children, directly in the native bullet tooltip
 
-Update to v.3: February 4th, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
+Update to v.3: February 8th, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
 ![block info v3](https://user-images.githubusercontent.com/74436347/216779258-b0585763-4e6b-464a-9822-7d8459cec8a6.gif)
 
