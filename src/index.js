@@ -3,6 +3,7 @@ import {
   addShortcutsListener,
   connectObservers,
   disconnectObserver,
+  infoDailyPage,
   infoPage,
   onPageLoad,
   removeDailyLogListeners,
@@ -238,9 +239,17 @@ export default {
     await extensionAPI.settings.panel.create(panelConfig);
 
     window.roamAlphaAPI.ui.commandPalette.addCommand({
-      label: "Get Page Info",
+      label: "Block & Page Info: Get Page Info",
       callback: async () => {
         displayPageInfo(await infoPage());
+      },
+    });
+
+    window.roamAlphaAPI.ui.commandPalette.addCommand({
+      label: "Block & Page Info: Get Info on recent Daily Notes",
+      callback: async () => {
+        let pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
+        displayPageInfo(await infoDailyPage(pageUid, pageUid));
       },
     });
 

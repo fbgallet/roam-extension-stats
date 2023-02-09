@@ -54,8 +54,10 @@ export function addShortcutsListener() {
 
 export function removeListeners() {
   pageTitle = document.querySelector(".rm-title-display");
-  pageTitle.removeEventListener("mouseenter", onTitleOver);
-  pageTitle.removeEventListener("mouseleave", onTitleLeave);
+  if (pageTitle) {
+    pageTitle.removeEventListener("mouseenter", onTitleOver);
+    pageTitle.removeEventListener("mouseleave", onTitleLeave);
+  }
   window.removeEventListener("popstate", onPageLoad);
   removeShortcutsListeners();
 }
@@ -67,8 +69,10 @@ export function removeShortcutsListeners() {
     s.removeEventListener("mouseleave", onTitleLeave);
   });
   let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
-  dailyNotes.addEventListener("mouseenter", onTitleOver);
-  dailyNotes.addEventListener("mouseleave", onTitleLeave);
+  if (dailyNotes) {
+    dailyNotes.removeEventListener("mouseenter", onTitleOver);
+    dailyNotes.removeEventListener("mouseleave", onTitleLeave);
+  }
 }
 
 export function removeDailyLogListeners() {
@@ -211,7 +215,7 @@ export async function infoPage(pageUid, title) {
   )}${getFormatedChildrenStats(pageUid, users, title)}`;
 }
 
-async function infoDailyPage(pageUid) {
+export async function infoDailyPage(pageUid) {
   let users = getUser(pageUid);
   let result = `Today: ${getFormatedDay(new Date())}${getFormatedChildrenStats(
     pageUid,
