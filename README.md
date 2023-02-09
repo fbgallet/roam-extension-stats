@@ -1,12 +1,12 @@
 # Block & Page Info v.3
 
-### Get a quick overview of several informations on any block or page (since v.2) and their children, directly in the native bullet tooltip
+### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip.
 
 Update to v.3: February 8th, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
-![block info v3](https://user-images.githubusercontent.com/74436347/216779258-b0585763-4e6b-464a-9822-7d8459cec8a6.gif)
+![block info v31](https://user-images.githubusercontent.com/74436347/217921183-7e26dd1f-43ca-4bd1-87c4-0b4f0515a5f2.gif)
 
-Just over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the following info (info between brackets are optional):
+Just hover over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the following info (info between brackets are optional):
 
 - Creation Date and time (customizable format)
   - by [user]
@@ -17,7 +17,12 @@ Just over any bullet, page title, page shortcut or 'Daily notes' in the left sid
 - DONE/TODO ratio and percentage (or progress bar with 6 boxes: "🟩🟩🟩□□□" means more that 50%, less than 66%)
 - [Linked references count] (🆕 new in v.3)
   - [Date of the last update of a linked reference]
-- When hovering over 'Daily notes', see all these info for today and up to 6 days before (🆕 new in v.3)
+
+- When hovering over 'Daily notes', see all these info for today and up to 6 days before (🆕 new in v.3). 
+
+There is also two commands in the command palette, opening a popup:
+- 'Get page info'
+- 'Get info o recent Daily Notes'.
 
 ---
 Do you think other information could be useful? Don't hesitate to let me know!
