@@ -87,11 +87,13 @@ export function removeDailyLogListeners() {
 
 export function onPageLoad(e) {
   // setTimeout(() => {
+  disconnectObserver("tooltips");
   if (pageTitle) {
     pageTitle.removeEventListener("mouseenter", onTitleOver);
     pageTitle.removeEventListener("mouseleave", onTitleLeave);
   }
   setTimeout(() => {
+    connectObservers();
     let isLogPage = document.querySelector(".roam-log-container");
     isHover = false;
     if (isLogPage) {

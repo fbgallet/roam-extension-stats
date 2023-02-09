@@ -283,7 +283,6 @@ export default {
     // }
 
     onPageLoad();
-    connectObservers();
     addListeners();
 
     console.log("Block Info extension loaded.");
