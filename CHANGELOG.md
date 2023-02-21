@@ -1,3 +1,16 @@
+## v.4 (February 21st, 2023)
+### New features
+  - Streak at a glance !
+  - Command to toggle on/off tooltip on hover
+  - Option to change font size in tooltips
+### Updates
+  - Hotkeys for detailled Page info
+  - Tooltip delay option now apply to block tooltips too
+  - Option to hide children count
+### Fixes
+  - Tooltip listeners are now disabled on mobile
+  - Better stability
+
 ## v.3 (February 8th, 2023)
 ### New features
   - Info on 'Daily notes' up to 6 days before
