@@ -2,6 +2,9 @@ import React from "react";
 import { useState } from "react";
 import FormDialog from "roamjs-components/components/FormDialog";
 import renderOverlay from "roamjs-components/util/renderOverlay";
+import { cleanExtensionPage, deleteStreakBlock } from "./observers";
+
+let typeElt;
 
 const Dialog = () => {
   const [isOpen, setIsOpen] = useState(true);
@@ -9,14 +12,19 @@ const Dialog = () => {
     <>
       <FormDialog
         isOpen={isOpen}
-        title={"Page info"}
-        onClose={() => setIsOpen(false)}
+        title={`${typeElt} info`}
+        onClose={() => {
+          setIsOpen(false);
+          //deleteStreakBlock();
+          cleanExtensionPage();
+        }}
       />
     </>
   );
 };
 
-export async function displayPageInfo(infos) {
+export async function displayPageInfo(infos, type) {
+  typeElt = type;
   const parent = document.createElement("div");
   let t = document.querySelector(".rm-title-display");
   t.parentElement.appendChild(parent);

@@ -43,6 +43,20 @@ export function getPageUidByTitle(title) {
   else return null;
 }
 
+export function getPageTitleByUid(uid) {
+  let result = window.roamAlphaAPI.pull("[:node/title]", [":block/uid", uid]);
+  if (result) return result[":node/title"];
+  else return null;
+}
+
+export function getBlocksByPageTitle(title) {
+  return window.roamAlphaAPI.q(`[:find ?u ?s :where  
+      [?b :block/uid ?u] 
+      [?b :block/string ?s]
+      [?b :block/page ?e] 
+      [?e :node/title "${title}"]]`);
+}
+
 export function getBlocksIncludingRef(uid) {
   return window.roamAlphaAPI.q(
     `[:find ?u ?s

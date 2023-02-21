@@ -1,6 +1,7 @@
 import {
   dateFormat,
   displayChar,
+  displayChildren,
   displayEditName,
   displayREFS,
   displayTODO,
@@ -19,7 +20,7 @@ import {
   resolveReferences,
 } from "./utils";
 
-function getDateStrings(uid) {
+export function getDateStrings(uid) {
   // let t = document.querySelector(".rm-bullet__tooltip"); // .rm-bullet-tooltip__time
   let blockTimes = getBlockTimes(uid);
   let c = formatDateAndTime(blockTimes.create);
@@ -193,29 +194,35 @@ function getFormatedUserName(uid) {
   return result;
 }
 
-export function getFormatedDateStrings(uid, users, node = "block") {
+export function getFormatedDateStrings(
+  dates,
+  users,
+  node = "block",
+  displayAll = false
+) {
   let result = "";
-  let dates = getDateStrings(uid);
+  // let dates = getDateStrings(uid);
   let doNotDisplayCreateName = false;
 
-  result += `Created:\n${dates.c.date}, ${dates.c.time}\n`;
-  if (displayEditName) result += `by ${users.createUser}\n`;
+  result += `Created:\n${dates.c.date}, ${dates.c.time}`;
+  if (displayEditName || displayAll) result += `\nby ${users.createUser}`;
   if (
     node === "block" &&
     (dates.c.date != dates.u.date ||
       dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
   ) {
-    result += `Updated:\n${dates.u.date}, ${dates.u.time}\n`;
+    result += `\nUpdated:\n${dates.u.date}, ${dates.u.time}`;
   } else {
     doNotDisplayCreateName = true;
   }
   if (
     users.editUser != users.createUser &&
     !doNotDisplayCreateName &&
-    displayEditName
+    (displayEditName || displayAll)
   )
-    result += `by ${users.editUser}\n`;
-  //result += "\n";
+    result += `\nby ${users.editUser}`;
+  // result += "\n";
+  //console.log(result);
   return result;
 }
 
@@ -223,9 +230,10 @@ export function getFormatedChildrenStats(
   uid,
   users,
   node = "block",
-  withDate = true
+  withDate = true,
+  displayAll = false
 ) {
-  let result = "";
+  let result = "\n";
   let tree = getTreeByUid(uid);
   if (!tree) return null;
   let bStats = getBlockStats(uid);
@@ -241,23 +249,33 @@ export function getFormatedChildrenStats(
     let cString = [];
     if (node !== "block" && withDate) {
       let newestTime = formatDateAndTime(cStats.newestTime);
-      let updateString = `Last updated block:\n${newestTime.date}, ${newestTime.time}\n`;
+      let updateString = `\nLast updated block:\n${newestTime.date}, ${newestTime.time}`;
       if (displayEditName && cStats.editUser != users.createUser)
-        updateString += `by ${cStats.editUser}\n`;
+        updateString += `\nby ${cStats.editUser}`;
       result = updateString + result;
     }
     let nodeType;
     node !== "block" ? (nodeType = "blocks") : (nodeType = "children");
-    cString.push(`\n${cStats.blocks} ${nodeType} `);
-    if (displayChar) cString.push(`${cStats.characters}c`);
-    if (displayWord) cString.push(`${cStats.words}w`);
+    if (displayAll || displayChar || displayChildren || displayWord)
+      cString.push("\n");
+    if (displayChildren) cString.push(`${cStats.blocks} ${nodeType}, `);
+    if (displayChar || displayAll) {
+      displayAll
+        ? cString.push(cStats.characters + " characters,")
+        : cString.push(cStats.characters + "c");
+    }
+    if (displayWord || displayAll) {
+      displayAll
+        ? cString.push(cStats.words + " words")
+        : cString.push(cStats.words + "w");
+    }
     result += `${cString.join(" ")}`;
-    if (displayTODO && cStats.todo != 0) {
+    if ((displayTODO || displayAll) && cStats.todo != 0) {
       let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
       result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
     }
   }
-  if (displayREFS) {
+  if (displayREFS || displayAll) {
     let refs;
     node === "block"
       ? (refs = getBlocksIncludingRef(uid))
@@ -274,9 +292,16 @@ export function getFormatedChildrenStats(
       });
       let refTime = formatDateAndTime(newestTime);
       result += `\n`;
-      if (node !== "block") result += `${refsNb} linked ref\n`;
-      result += `Last ref: ${refTime.date}`;
+      if (node !== "block") {
+        displayAll
+          ? (result += `\n${refsNb} linked references`)
+          : (result += `${refsNb} linked ref`);
+      }
+      displayAll
+        ? (result += `\nLast updated reference:\n${refTime.date}`)
+        : (result += `\nLast ref: ${refTime.date}`);
     }
   }
+  if (result === "\n") result = "";
   return result;
 }

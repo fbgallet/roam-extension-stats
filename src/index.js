@@ -1,8 +1,9 @@
 import {
   addListeners,
-  addShortcutsListener,
-  connectObservers,
+  cleanExtensionPage,
   disconnectObserver,
+  displayStreak,
+  getInfoOnBlock,
   infoDailyPage,
   infoPage,
   onPageLoad,
@@ -11,12 +12,16 @@ import {
   removeShortcutsListeners,
 } from "./observers";
 import { displayPageInfo, displayToast, displayTooltip } from "./components";
+import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
 
+export const EXTENSION_PAGE_UID = getExtensionPageUidOrCreateIt();
+export var tooltipOff;
 export var displayEditName;
 export var dateFormat;
 var localDate;
 export var timeFormat;
 export var localDateFormat;
+export var displayChildren;
 export var displayChar;
 export var displayWord;
 export var displayTODO;
@@ -25,6 +30,30 @@ export var displayShortcutInfo;
 export var nbDaysBefore;
 export var tooltipDelay;
 export var displayREFS;
+export var displayStreakRender;
+export var monthsInStreak;
+export var fontSize;
+
+function getExtensionPageUidOrCreateIt() {
+  let createWarningMessage = true;
+  let pageUid = getPageUidByTitle("roam/depot/page & block info");
+  if (pageUid === null) {
+    pageUid = window.roamAlphaAPI.util.generateUID();
+    window.roamAlphaAPI.createPage({
+      page: { title: "roam/depot/page & block info", uid: pageUid },
+    });
+  }
+  createWarningMessage = cleanExtensionPage();
+  if (createWarningMessage)
+    window.roamAlphaAPI.createBlock({
+      location: { "parent-uid": pageUid, order: 0 },
+      block: {
+        string:
+          "⚠️ Doesn't write anything on this page, all content will be deleted on each streak view in page info.",
+      },
+    });
+  return pageUid;
+}
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -37,9 +66,94 @@ function getModeTodo(mode) {
   }
 }
 
+function getFontSize(size) {
+  switch (size) {
+    case "Extra small":
+      return "pbi-fs-11";
+    case "Small":
+      return "pbi-fs-12";
+    case "Large":
+      return "pbi-fs-14";
+    case "Theme default":
+      return "pbi-fs-theme";
+    default:
+      return "";
+  }
+}
+
+async function setTooltipState(state) {
+  switch (state) {
+    case "Disable all":
+      tooltipOff = true;
+      break;
+    case "Disable for shorcuts":
+      tooltipOff = false;
+      displayShortcutInfo = false;
+      removeShortcutsListeners();
+      break;
+    case "Enable all":
+      tooltipOff = false;
+      displayShortcutInfo = true;
+  }
+  await toggleListenersForTooltips(false);
+}
+
+async function toggleListenersForTooltips(firstTime) {
+  // No tooltip and listeners on mobile
+  if (
+    !tooltipOff &&
+    !window.roamAlphaAPI.platform.isMobile &&
+    !window.roamAlphaAPI.platform.isMobileApp
+  ) {
+    onPageLoad();
+    addListeners();
+  }
+  if (tooltipOff && !firstTime) {
+    removeListeners();
+    disconnectObserver("tooltips");
+    disconnectObserver("logs");
+    removeDailyLogListeners();
+  }
+}
+
 const panelConfig = {
   tabTitle: "Blocks infos",
   settings: [
+    {
+      id: "toggleToolips",
+      name: "Toggle tooltips",
+      description: "Enable tooltips on hover:",
+      action: {
+        type: "select",
+        items: ["Enable all", "Disable for shortcuts", "Disable all"],
+        onChange: (evt) => {
+          setTooltipState(evt);
+        },
+      },
+    },
+    {
+      id: "delay",
+      name: "Tooltip display delay",
+      description: "Delay before the tooltip is displayed on hover (in ms):",
+      action: {
+        type: "input",
+        onChange: (evt) => {
+          tooltipDelay = evt.target.value;
+        },
+      },
+    },
+    {
+      id: "fontSize",
+      name: "Font size",
+      description: "Font size in tooltip (Medium = 13px):",
+      action: {
+        type: "select",
+        items: ["Theme default", "Extra small", "Small", "Medium", "Large"],
+        onChange: (evt) => {
+          fontSize = getFontSize(evt);
+        },
+      },
+    },
     {
       id: "displayName",
       name: "User Name",
@@ -93,6 +207,17 @@ const panelConfig = {
         ],
         onChange: (evt) => {
           timeFormat = evt;
+        },
+      },
+    },
+    {
+      id: "displayChildren",
+      name: "Children count",
+      description: "Display children or blocks in page count:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayChildren = !displayChildren;
         },
       },
     },
@@ -153,23 +278,35 @@ const panelConfig = {
       },
     },
     {
-      id: "displayShortcut",
-      name: "Display Shortcuts Info",
+      id: "displayStreak",
+      name: "Display streak",
       description:
-        "Display page Info when hovering a page shortcut in the left sidebar:",
+        "Display streak (heatmap) about the page whose title or shortcut is hovered over:",
       action: {
         type: "switch",
         onChange: (evt) => {
-          displayShortcutInfo = !displayShortcutInfo;
-          displayShortcutInfo
-            ? addShortcutsListener()
-            : removeShortcutsListeners();
+          displayStreakRender = !displayStreakRender;
+        },
+      },
+    },
+    {
+      id: "monthsInStreak",
+      name: "How many months in streak ?",
+      description:
+        "Number of months to display in streak (heatmap) by hovering over the page title:",
+      action: {
+        type: "select",
+        items: ["1", "2", "3", "4", "6", "Maximum"],
+        onChange: (evt) => {
+          evt === "Maximum"
+            ? (monthsInStreak = undefined)
+            : (monthsInStreak = parseInt(evt));
         },
       },
     },
     {
       id: "nbDaysBefore",
-      name: "Number of days before",
+      name: "Number of Daily Notes",
       description:
         "Display stats of how many previous days when hovering 'Daily Notes':",
       action: {
@@ -180,23 +317,14 @@ const panelConfig = {
         },
       },
     },
-    {
-      id: "delay",
-      name: "Tooltip display delay",
-      description:
-        "Delay before the tooltip is displayed when hovering over a page title/shortcut (in ms):",
-      action: {
-        type: "input",
-        onChange: (evt) => {
-          tooltipDelay = evt.target.value;
-        },
-      },
-    },
   ],
 };
 
 export default {
   onload: async ({ extensionAPI }) => {
+    if (extensionAPI.settings.get("toggleTooltips") === null)
+      await extensionAPI.settings.set("toggleTooltips", "Enable all");
+    await setTooltipState(await extensionAPI.settings.get("toggleTooltips"));
     if (extensionAPI.settings.get("displayName") === null)
       await extensionAPI.settings.set("displayName", false);
     displayEditName = extensionAPI.settings.get("displayName");
@@ -211,6 +339,9 @@ export default {
     if (extensionAPI.settings.get("timeFormat") === null)
       await extensionAPI.settings.set("timeFormat", "HH:MM");
     timeFormat = extensionAPI.settings.get("timeFormat");
+    if (extensionAPI.settings.get("displayChildren") === null)
+      await extensionAPI.settings.set("displayChildren", true);
+    displayChildren = extensionAPI.settings.get("displayChildren");
     if (extensionAPI.settings.get("displayCharacters") === null)
       await extensionAPI.settings.set("displayCharacters", true);
     displayChar = extensionAPI.settings.get("displayCharacters");
@@ -224,28 +355,44 @@ export default {
       await extensionAPI.settings.set("modeTODO", "(50%)");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
     if (extensionAPI.settings.get("displayREFS") === null)
-      await extensionAPI.settings.set("displayREFS", true);
+      await extensionAPI.settings.set("displayREFS", false);
     displayREFS = extensionAPI.settings.get("displayREFS");
-    if (extensionAPI.settings.get("displayShortcut") === null)
-      await extensionAPI.settings.set("displayShortcut", true);
-    displayShortcutInfo = extensionAPI.settings.get("displayShortcut");
+    if (extensionAPI.settings.get("displayStreak") === null)
+      await extensionAPI.settings.set("displayStreak", true);
+    displayStreakRender = extensionAPI.settings.get("displayStreak");
+    if (extensionAPI.settings.get("monthsInStreak") === null)
+      await extensionAPI.settings.set("monthsInStreak", 2);
+    extensionAPI.settings.get("monthsInStreak") == "Maximum"
+      ? (monthsInStreak = undefined)
+      : (monthsInStreak = extensionAPI.settings.get("monthsInStreak"));
     if (extensionAPI.settings.get("nbDaysBefore") === null)
       await extensionAPI.settings.set("nbDaysBefore", 2);
     nbDaysBefore = extensionAPI.settings.get("nbDaysBefore");
     if (extensionAPI.settings.get("delay") === null)
-      await extensionAPI.settings.set("delay", 800);
+      await extensionAPI.settings.set("delay", 1000);
     tooltipDelay = extensionAPI.settings.get("delay");
+    if (extensionAPI.settings.get("fontSize") === null)
+      await extensionAPI.settings.set("fontSize", "Medium");
+    fontSize = getFontSize(extensionAPI.settings.get("fontSize"));
 
     await extensionAPI.settings.panel.create(panelConfig);
 
-    window.roamAlphaAPI.ui.commandPalette.addCommand({
+    extensionAPI.ui.commandPalette.addCommand({
       label: "Block & Page Info: Get Page Info",
       callback: async () => {
-        displayPageInfo(await infoPage());
+        let pageUid = await getMainPageUid();
+        let title = getPageTitleByUid(pageUid);
+        displayPageInfo(await infoPage(pageUid, title, true), "Page");
+        let dialog = document.querySelector(".bp3-dialog-body");
+        let newNode = document.createElement("div");
+        //newNode.innerHTML = "<br>";
+        dialog.appendChild(newNode);
+        displayStreak(pageUid, title, dialog);
       },
+      "default-hotkey": "ctrl-alt-i",
     });
 
-    window.roamAlphaAPI.ui.commandPalette.addCommand({
+    extensionAPI.ui.commandPalette.addCommand({
       label: "Block & Page Info: Get Info on recent Daily Notes",
       callback: async () => {
         let pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
@@ -253,53 +400,33 @@ export default {
       },
     });
 
-    // Add command to block context menu
-    // roamAlphaAPI.ui.blockContextMenu.addCommand({
-    //   label: "Color Highlighter: Remove color tags",
-    //   "display-conditional": (e) => e["block-string"].includes("#c:"),
-    //   callback: (e) => removeHighlightsFromBlock(e["block-uid"], removeOption),
-    // });
+    extensionAPI.ui.commandPalette.addCommand({
+      label: "Block & Page Info: Toggle tooltips on hover",
+      callback: () => {
+        console.log(tooltipOff);
+        tooltipOff
+          ? setTooltipState("Enable all")
+          : setTooltipState("Disable all");
+      },
+    });
 
-    // Add SmartBlock command
-    // const insertCmd = {
-    //   text: "INSERTFOOTNOTE",
-    //   help: "Insert automatically numbered footnote (requires the Footnotes extension)",
-    //   handler: (context) => () => {
-    //     noteInline = null;
-    //     currentPos = new position();
-    //     currentPos.s = context.currentContent.length;
-    //     currentPos.e = currentPos.s;
-    //     insertOrRemoveFootnote(context.targetUid);
-    //     return "";
-    //   },
-    // };
-    // if (window.roamjs?.extension?.smartblocks) {
-    //   window.roamjs.extension.smartblocks.registerCommand(insertCmd);
-    // } else {
-    //   document.body.addEventListener(`roamjs:smartblocks:loaded`, () => {
-    //     window.roamjs?.extension.smartblocks &&
-    //       window.roamjs.extension.smartblocks.registerCommand(insertCmd);
-    //   });
-    // }
+    roamAlphaAPI.ui.blockContextMenu.addCommand({
+      label: "Block Info",
+      callback: (e) => {
+        let block = document.querySelector(`[id$='${e["block-uid"]}']`);
+        displayPageInfo(getInfoOnBlock(e["block-uid"], block), "Block");
+      },
+    });
 
-    onPageLoad();
-    addListeners();
+    //toggleListenersForTooltips(true);
 
     console.log("Block Info extension loaded.");
     //return;
   },
   onunload: () => {
-    disconnectObserver("tooltips");
-    disconnectObserver("logs");
-    removeListeners();
-    removeDailyLogListeners();
-    // window.roamAlphaAPI.ui.commandPalette.removeCommand({
-    //   label: "Footnotes: Reorder footnotes on current page",
-    // });
+    tooltipOff = true;
+    toggleListenersForTooltips(false);
 
-    // roamAlphaAPI.ui.blockContextMenu.removeCommand({
-    //   label: "Color Highlighter: Remove color tags",
-    // });
     console.log("Block Info extension unloaded");
   },
 };

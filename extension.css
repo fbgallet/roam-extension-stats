@@ -1,44 +1,33 @@
-/* .rm-title-display:hover {
-  cursor: help !important;
-} */
-
-/* .rm-modal-dialog,
-.bp3-dialog {
-  color: inherit;
-} */
-
-/* .tooltip {
-  position: relative;
-  display: inline-block;
-  border-bottom: 1px dotted black;
-} */
-
 .tooltiptext {
   visibility: hidden;
-  width: auto;
+  transition: visibility 0s 1.5s;
+  /* opacity: 0; */
+  width: max-content;
   background-color: var(--bc-tooltip__content, #394b59) !important;
   color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87)) !important;
-  font-size: var(--fs-tooltip__content, 12px) !important;
+  font-size: 13px;
   font-family: var(--ff-app__div, inherit) !important;
   text-align: left;
   font-weight: 300 !important;
-  line-height: 1.5rem;
-  border-radius: 3px;
+  line-height: 1.4rem;
+  border-radius: 5px;
   border: var(--bt-tooltip, 1px solid gray);
-  padding: 10px 12px;
+  padding: 8px 10px;
   margin-left: 5px;
+  margin-top: 2px;
   position: absolute;
-  top: 110%;
+  top: 100%;
   left: 0;
-  z-index: 999;
-  opacity: 0;
+  /* top: 25px;
+  left: -21px; */
+  z-index: 9999 !important;
 }
 
 .tooltiptext::after {
   content: " ";
   position: absolute;
   bottom: 100%; /* At the top of the tooltip */
-  left: 50%;
+  left: 10%;
   margin-left: -8px;
   border-width: 8px;
   border-style: solid;
@@ -47,20 +36,44 @@
 
 .rm-title-display:hover .tooltiptext,
 .page:hover .tooltiptext,
-.rm-left-sidebar__daily-notes:hover .tooltiptext {
-  transition-delay: 1s !important;
+.rm-left-sidebar__daily-notes:hover .tooltiptext,
+.rm-bullet:hover .tooltiptext {
   visibility: visible;
-  opacity: 1;
+  /* opacity: 1; */
 }
+
+.tooltiptext:hover {
+  visibility: visible !important;
+}
+
+/* .rm-title-display:not(:hover) .tooltiptext,
+.page:not(:hover) .tooltiptext {
+  visibility: hidden;
+  transition: visibility 0.4s;
+} */
 
 .rm-bullet__tooltip {
   background-color: var(--bc-tooltip__content, #394b59) !important;
   color: var(--co-tooltip__content, rgba(255, 255, 255, 0.87)) !important;
-  font-size: var(--fs-tooltip__content, 12px) !important;
+  /* font-size: var(--fs-tooltip__content, 13px) !important; */
+  font-size: 13px;
   font-family: var(--ff-app__div, inherit) !important;
   text-align: left;
   font-weight: 300;
-  line-height: 1.5rem;
+  line-height: 1.4rem;
+}
+
+.pbi-fs-11 {
+  font-size: 11px !important;
+}
+.pbi-fs-12 {
+  font-size: 12px !important;
+}
+.pbi-fs-14 {
+  font-size: 14px !important;
+}
+.pbi-fs-theme {
+  font-size: var(--fs-tooltip__content, 13px) !important;
 }
 
 /* .rm-title-display:hover::after {
