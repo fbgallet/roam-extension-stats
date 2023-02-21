@@ -4,7 +4,8 @@
 
 Update to v.4: February 21st, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
-![block info v31](https://user-images.githubusercontent.com/74436347/217921183-7e26dd1f-43ca-4bd1-87c4-0b4f0515a5f2.gif)
+![block info v 4 1](https://user-images.githubusercontent.com/74436347/220415782-0a6084ac-8c19-4aa2-81a9-fd6890a2d335.gif)
+
 
 ### Tooltips
 Just hover over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the following info (info between brackets are optional):
