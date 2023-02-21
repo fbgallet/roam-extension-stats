@@ -311,7 +311,7 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
   });
   let newNode = document.createElement("span");
   elt.appendChild(newNode);
-  window.roamAlphaAPI.ui.components.renderBlock({
+  await window.roamAlphaAPI.ui.components.renderBlock({
     uid: blockToRender,
     el: newNode,
   });
@@ -320,7 +320,14 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
   let main = elt.querySelector(".rm-block-main");
   main.lastChild.style.minWidth = "0";
 
+  let recentMention = false;
+  let oldMention = false;
+  let oldMentionDate;
+
+  let streak = elt.querySelector(".rm-streak");
+  streak.style.visibility = "hidden";
   let months = elt.querySelectorAll(".rm-streak__month");
+  // months.style.visibility = "none";
   let days = elt.querySelectorAll(".rm-streak__day");
   let columnNb;
   if (maxMonths) {
@@ -338,17 +345,40 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
     let daysToDisplay = 28 * maxMonths + lastDayNb;
     // console.log(weeksToRemove);
     for (let i = days.length - 1; i >= 0; i--) {
-      if (i < days.length - daysToDisplay) days[i].style.display = "none";
-      else {
+      if (i < days.length - daysToDisplay) {
+        days[i].style.display = "none";
+        if (
+          !oldMention &&
+          !days[i].getAttribute("title").includes(" 0 times")
+        ) {
+          oldMention = true;
+          oldMentionDate = days[i].getAttribute("title").split(":")[0];
+        }
+      } else {
         days[i].style.gridColumnStart -= weeksToRemove;
+        if (
+          !recentMention &&
+          !days[i].getAttribute("title").includes(" 0 times")
+        ) {
+          recentMention = true;
+        }
       }
     }
   } else {
     columnNb = days[days.length - 1].style.gridColumnStart - 1;
+    recentMention = true;
   }
   columnNb = columnNb.toString();
   let grid = elt.querySelector(".rm-streak__grid");
   grid.style.gridTemplateColumns = `max-content repeat(${columnNb}, 12px)`;
+
+  if (!recentMention) {
+    elt.innerText += `Streak:\nNo mention last ${maxMonths} mths`;
+    if (oldMention)
+      elt.innerText += `\nLast mention: ${oldMentionDate.slice(4)}`;
+  } else {
+    streak.style.visibility = "visible";
+  }
 }
 
 export async function deleteStreakBlock() {
