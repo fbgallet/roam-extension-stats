@@ -1,11 +1,12 @@
-# Block & Page Info v.3
+# Block & Page Info v.4
 
 ### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip.
 
-Update to v.3: February 8th, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
+Update to v.4: February 21st, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
 ![block info v31](https://user-images.githubusercontent.com/74436347/217921183-7e26dd1f-43ca-4bd1-87c4-0b4f0515a5f2.gif)
 
+### Tooltips
 Just hover over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the following info (info between brackets are optional):
 
 - Creation Date and time (customizable format)
@@ -16,13 +17,19 @@ Just hover over any bullet, page title, page shortcut or 'Daily notes' in the le
 - Children blocks count, [Character] and [word] count in children blocks
 - DONE/TODO ratio and percentage (or progress bar with 6 boxes: "🟩🟩🟩□□□" means more that 50%, less than 66%)
 - [Linked references count] (🆕 new in v.3)
-  - [Date of the last update of a linked reference]
+  - Date of the last update of a linked reference
+- [Streak], i.e. heatmap about mention of the given page on Daily Notes (🆕 new in v.4)
 
 - When hovering over 'Daily notes', see all these info for today and up to 6 days before (🆕 new in v.3). 
 
-There is also two commands in the command palette, opening a popup:
-- 'Get page info'
-- 'Get info o recent Daily Notes'.
+### Commands
+Three commands in the command palette:
+- 'Get page info' (default hotkeys: `Ctrl-Alt-i`) : display in a popup detailed info and the complete streak for current page,
+- 'Get info on recent Daily Notes',
+- 'Toggle tooltips on hover': you can disable tooltips if you find them annoying. (🆕 new in v.4)
+
+A command in block contextual menu:
+- 'Block info': useful if you have disabled tooltips. (🆕 new in v.4)
 
 ---
 Do you think other information could be useful? Don't hesitate to let me know!
@@ -31,7 +38,6 @@ Future possible developments:
 
 - tooltip for other elements like dates in the calendar ?
 - info on referenes in the page and linked references ?
-- info on the frequency of changes ? 
 
 ---
 
