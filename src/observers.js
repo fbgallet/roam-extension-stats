@@ -329,7 +329,8 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
     for (let i = months.length - 1; i >= 0; i--) {
       if (i < months.length - maxMonths) months[i].style.display = "none";
       else {
-        months[i].style.gridColumnStart -= (months.length - maxMonths) * 4 + 2;
+        months[i].style.gridColumnStart =
+          (i - (months.length - maxMonths - 1)) * 4;
       }
     }
     let weeksToRemove = Math.floor((days.length - 28 * maxMonths) / 7);
