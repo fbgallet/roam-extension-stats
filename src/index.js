@@ -86,10 +86,10 @@ async function setTooltipState(state) {
     case "Disable all":
       tooltipOff = true;
       break;
-    case "Disable for shorcuts":
+    case "Disable for shortcuts":
       tooltipOff = false;
       displayShortcutInfo = false;
-      removeShortcutsListeners();
+      // removeShortcutsListeners();
       break;
     case "Enable all":
       tooltipOff = false;
@@ -109,10 +109,10 @@ async function toggleListenersForTooltips(firstTime) {
     addListeners();
   }
   if (tooltipOff && !firstTime) {
-    removeListeners();
+    // removeListeners();
     disconnectObserver("tooltips");
     disconnectObserver("logs");
-    removeDailyLogListeners();
+    // removeDailyLogListeners();
   }
 }
 
@@ -426,6 +426,8 @@ export default {
   onunload: () => {
     tooltipOff = true;
     toggleListenersForTooltips(false);
+    removeListeners();
+    removeDailyLogListeners();
 
     console.log("Block Info extension unloaded");
   },

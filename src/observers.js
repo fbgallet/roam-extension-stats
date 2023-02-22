@@ -20,7 +20,9 @@ import {
   monthsInStreak,
   nbDaysBefore,
   tooltipDelay,
+  tooltipOff,
 } from ".";
+import { displayPageInfo } from "./components";
 
 let observers = {
   tooltips: null,
@@ -30,6 +32,7 @@ let pageTitle = undefined;
 let isHover;
 let dailyLogPageTitles = [];
 export let blockToRender;
+let triggerKeyPressed = false;
 
 export function connectObservers() {
   addObserver(
@@ -57,11 +60,33 @@ export function disconnectObserver(name) {
 
 export function addListeners() {
   window.addEventListener("popstate", onPageLoad);
-  addShortcutsListener();
+  shortcutsListener();
+  document.addEventListener("keydown", onkeydown);
+  document.addEventListener("keyup", onkeyup);
 }
 
-export function addShortcutsListener() {
-  if (displayShortcutInfo) shortcutsListener();
+function onkeydown(e) {
+  if (e.key === "Control" || e.key === "Meta") {
+    triggerKeyPressed = true;
+  }
+}
+
+function onkeyup(e) {
+  if (e.key === "Control" || e.key === "Meta") {
+    triggerKeyPressed = false;
+  }
+}
+
+export function shortcutsListener() {
+  let shortcuts = document.querySelectorAll(".page");
+  shortcuts.forEach((s) => {
+    s.addEventListener("mouseenter", onTitleOver);
+    s.addEventListener("mouseleave", onTitleLeave);
+    // s.addEventListener("click", onStarredPagesClick);
+  });
+  let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
+  dailyNotes.addEventListener("mouseenter", onTitleOver);
+  dailyNotes.addEventListener("mouseleave", onTitleLeave);
 }
 
 export function removeListeners() {
@@ -72,6 +97,10 @@ export function removeListeners() {
   }
   window.removeEventListener("popstate", onPageLoad);
   removeShortcutsListeners();
+  // document
+  //   .querySelector(".starred-pages")
+  document.removeEventListener("keydown", onkeydown);
+  document.removeEventListener("keyup", onkeyup);
 }
 
 export function removeShortcutsListeners() {
@@ -79,6 +108,7 @@ export function removeShortcutsListeners() {
   shortcuts.forEach((s) => {
     s.removeEventListener("mouseenter", onTitleOver);
     s.removeEventListener("mouseleave", onTitleLeave);
+    // s.removeEventListener("click", onStarredPagesClick);
   });
   let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
   if (dailyNotes) {
@@ -149,90 +179,6 @@ function dailyLogObserver(e) {
 
 var hoverEventTarget;
 
-function onTitleOver(e) {
-  {
-    if (isHover) return;
-    isHover = true;
-    hoverEventTarget = e.target;
-    setTimeout(async () => {
-      if (!isHover) return;
-      if (hoverEventTarget !== e.target) return;
-      let monthsToDisplay = monthsInStreak;
-      let dailyNotesHover = false;
-      let logHover = false;
-      let title = e.target.firstChild.textContent;
-      let tooltip = document.createElement("span");
-      e.target.style.position = "relative";
-      tooltip.classList.add("tooltiptext");
-      if (fontSize != "") tooltip.classList.add(fontSize);
-      let prevTooltip = e.target.querySelector(".tooltiptext");
-      prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip);
-      let pageUid;
-      // over Page title
-      if (e.target.classList.contains("rm-title-display")) {
-        pageUid = await getPageUidByTitle(e.target.innerText);
-        if (!pageUid) {
-          let originalTitle = e.target.dataset?.originalText;
-          if (originalTitle) pageUid = await getPageUidByTitle(originalTitle);
-        }
-        // in log page
-        if (document.querySelector(".roam-log-container")) {
-          logHover = true;
-        }
-      }
-      // over 'Daily Notes'
-      else if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
-        dailyNotesHover = true;
-        pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
-        // over Shortcuts in right sidebar or daily notes title in log
-      } else if (e.target.classList.contains("page")) {
-        pageUid = await getPageUidByTitle(e.target.innerText);
-        monthsToDisplay = 2;
-      }
-      if (!isHover) return;
-      if (dailyNotesHover)
-        tooltip.innerText = await infoDailyPage(pageUid, pageUid);
-      else {
-        tooltip.innerText = await infoPage(pageUid, title);
-        if (displayStreakRender && !logHover) {
-          displayStreak(pageUid, title, tooltip, monthsToDisplay);
-        }
-      }
-    }, tooltipDelay);
-    //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
-  }
-}
-
-function onTitleLeave(e) {
-  isHover = false;
-  // setTimeout(() => {
-  let tooltips = document.querySelectorAll(".tooltiptext");
-  if (tooltips) {
-    tooltips.forEach((t) => t.remove());
-    // deleteStreakBlock();
-  }
-  cleanExtensionPage();
-  // }, 500);
-}
-
-function onHoverLeave() {
-  isHover = false;
-  let tooltip = document.querySelector(".tooltiptext");
-  // console.log("removed!");
-  if (tooltip) tooltip.remove();
-}
-
-export function shortcutsListener() {
-  let shortcuts = document.querySelectorAll(".page");
-  shortcuts.forEach((s) => {
-    s.addEventListener("mouseenter", onTitleOver);
-    s.addEventListener("mouseleave", onTitleLeave);
-  });
-  let dailyNotes = document.querySelector(".rm-left-sidebar__daily-notes");
-  dailyNotes.addEventListener("mouseenter", onTitleOver);
-  dailyNotes.addEventListener("mouseleave", onTitleLeave);
-}
-
 export function infoTooltip(mutations) {
   let target = mutations[0].target;
   if (
@@ -286,6 +232,119 @@ export function getInfoOnBlock(uid, target) {
     u: formatDateAndTime(parseInt(parent.parentElement.dataset.editTime)),
   };
   return getFormatedDateStrings(dates, users) + getFormatedChildrenStats(uid);
+}
+
+function onTitleOver(e) {
+  {
+    if (triggerKeyPressed) {
+      onTriggerKeyHoverTitle(e);
+      isHover = false;
+      return;
+    }
+    if (isHover) return;
+    isHover = true;
+    hoverEventTarget = e.target;
+    setTimeout(async () => {
+      if (triggerKeyPressed) {
+        onTriggerKeyHoverTitle(e);
+        isHover = false;
+        return;
+      }
+      if (tooltipOff || !isHover) return;
+      if (hoverEventTarget !== e.target) return;
+      let monthsToDisplay = monthsInStreak;
+      let dailyNotesHover = false;
+      let logHover = false;
+      let title = e.target.firstChild.textContent;
+      let tooltip = document.createElement("span");
+      e.target.style.position = "relative";
+      tooltip.classList.add("tooltiptext");
+      if (fontSize != "") tooltip.classList.add(fontSize);
+      let prevTooltip = e.target.querySelector(".tooltiptext");
+      prevTooltip ? (tooltip = prevTooltip) : e.target.appendChild(tooltip);
+      let pageUid;
+      // over Page title
+      if (e.target.classList.contains("rm-title-display")) {
+        pageUid = await getPageUidByTitle(e.target.innerText);
+        if (!pageUid) {
+          let originalTitle = e.target.dataset?.originalText;
+          if (originalTitle) pageUid = await getPageUidByTitle(originalTitle);
+        }
+        // in log page
+        if (document.querySelector(".roam-log-container")) {
+          logHover = true;
+        }
+      }
+      // over 'Daily Notes'
+      else if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
+        dailyNotesHover = true;
+        pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
+        // over Shortcuts in leftt sidebar or daily notes title in log
+      } else if (displayShortcutInfo && e.target.classList.contains("page")) {
+        pageUid = await getPageUidByTitle(e.target.innerText);
+        monthsToDisplay = 2;
+      } else return;
+      if (!isHover) return;
+      if (dailyNotesHover) tooltip.innerText = await infoDailyPage(pageUid);
+      else {
+        tooltip.innerText = await infoPage(pageUid, title);
+        if (displayStreakRender && !logHover) {
+          displayStreak(pageUid, title, tooltip, monthsToDisplay);
+        }
+      }
+    }, tooltipDelay);
+    //document.addEventListener("keydown", ctrlDown /*, { once: true }*/);
+  }
+}
+
+function onTitleLeave(e) {
+  isHover = false;
+  // setTimeout(() => {
+  let tooltips = document.querySelectorAll(".tooltiptext");
+  if (tooltips) {
+    tooltips.forEach((t) => t.remove());
+    // deleteStreakBlock();
+  }
+  cleanExtensionPage();
+  // }, 500);
+}
+
+async function onTriggerKeyHoverTitle(e) {
+  if (triggerKeyPressed) {
+    let title = e.target.innerText;
+    if (document.querySelector(".bp3-dialog")) return;
+    // if on 'Daily Notes'
+    if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
+      pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
+      let daysToDisplay;
+      tooltipOff ? (daysToDisplay = nbDaysBefore) : (daysToDisplay = 6);
+      displayPageInfo(
+        await infoDailyPage(pageUid, daysToDisplay),
+        "Daily Notes"
+      );
+      return;
+    }
+    // else: title or shorcuts
+    let displayAllInfo;
+    tooltipOff ? (displayAllInfo = false) : (displayAllInfo = true);
+    let pageUid = await getPageUidByTitle(title);
+    displayPageInfo(
+      await infoPage(pageUid, title, displayAllInfo),
+      "Page",
+      title
+    );
+    let dialog = document.querySelector(".bp3-dialog-body");
+    let newNode = document.createElement("div");
+    dialog.appendChild(newNode);
+    displayStreak(pageUid, title, dialog);
+  }
+}
+
+function onHoverLeave() {
+  isHover = false;
+  let tooltip = document.querySelector(".tooltiptext");
+  // console.log("removed!");
+  if (tooltip) tooltip.remove();
 }
 
 export async function infoPage(pageUid, title, displayAll = false) {
@@ -405,7 +464,7 @@ export function cleanExtensionPage() {
   return createWarningMessage;
 }
 
-export async function infoDailyPage(pageUid) {
+export async function infoDailyPage(pageUid, nbDays = nbDaysBefore) {
   let users = getUser(pageUid);
   let result = `Today: ${getFormatedDay(new Date())}${getFormatedChildrenStats(
     pageUid,
@@ -414,7 +473,7 @@ export async function infoDailyPage(pageUid) {
     false
   )}`;
   let previousDayDate = new Date();
-  for (let i = 0; i < nbDaysBefore; i++) {
+  for (let i = 0; i < nbDays; i++) {
     previousDayDate = getYesterdayDate(previousDayDate);
     let previousDayUid = await window.roamAlphaAPI.util.dateToPageUid(
       previousDayDate
