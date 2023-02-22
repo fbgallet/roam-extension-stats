@@ -2,6 +2,7 @@
 ### New features
   - Streak at a glance !
   - Command to toggle on/off tooltip on hover
+  - Press Ctrl or Cmd on title/shortcut hover to see page info in a popup
   - Option to change font size in tooltips
 ### Updates
   - Hotkeys for detailled Page info
