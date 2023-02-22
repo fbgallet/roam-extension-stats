@@ -1,6 +1,6 @@
 # Block & Page Info v.4
 
-### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip.
+### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip. Now, see page streak at a glance! (🆕 new in v.4)
 
 Update to v.4: February 23rd, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
@@ -9,6 +9,7 @@ Update to v.4: February 23rd, 2023. See [changelog here](https://github.com/fbga
 
 ### Tooltips
 Just hover over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the selected info.
+
 When hovering over 'Daily notes' in the left sidebar, see info for today and up to 6 days before (🆕 new in v.3). 
 
 You can also press `Ctrl or Cmd` when hovering over a page title (or shortcut) to see detailed info in a popup. (🆕 new in v.4)
