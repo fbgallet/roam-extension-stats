@@ -9,7 +9,6 @@ import {
   onPageLoad,
   removeDailyLogListeners,
   removeListeners,
-  removeShortcutsListeners,
 } from "./observers";
 import { displayPageInfo, displayToast, displayTooltip } from "./components";
 import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
@@ -61,8 +60,6 @@ function getModeTodo(mode) {
       return "percent";
     case "🟩🟩🟩□□□":
       return "green squares";
-    default:
-      return "percent";
   }
 }
 
@@ -120,14 +117,14 @@ const panelConfig = {
   tabTitle: "Blocks infos",
   settings: [
     {
-      id: "toggleToolips",
+      id: "toggleTooltips",
       name: "Toggle tooltips",
       description: "Enable tooltips on hover:",
       action: {
         type: "select",
         items: ["Enable all", "Disable for shortcuts", "Disable all"],
-        onChange: (evt) => {
-          setTooltipState(evt);
+        onChange: async (evt) => {
+          await setTooltipState(evt);
         },
       },
     },
@@ -324,7 +321,7 @@ export default {
   onload: async ({ extensionAPI }) => {
     if (extensionAPI.settings.get("toggleTooltips") === null)
       await extensionAPI.settings.set("toggleTooltips", "Enable all");
-    await setTooltipState(await extensionAPI.settings.get("toggleTooltips"));
+    await setTooltipState(extensionAPI.settings.get("toggleTooltips"));
     if (extensionAPI.settings.get("displayName") === null)
       await extensionAPI.settings.set("displayName", false);
     displayEditName = extensionAPI.settings.get("displayName");
@@ -352,7 +349,7 @@ export default {
       await extensionAPI.settings.set("displayTODO", true);
     displayTODO = extensionAPI.settings.get("displayTODO");
     if (extensionAPI.settings.get("modeTODO") === null)
-      await extensionAPI.settings.set("modeTODO", "(50%)");
+      await extensionAPI.settings.set("modeTODO", "🟩🟩🟩□□□");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
     if (extensionAPI.settings.get("displayREFS") === null)
       await extensionAPI.settings.set("displayREFS", false);

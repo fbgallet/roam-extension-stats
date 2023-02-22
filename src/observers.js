@@ -283,7 +283,10 @@ function onTitleOver(e) {
       } else if (displayShortcutInfo && e.target.classList.contains("page")) {
         pageUid = await getPageUidByTitle(e.target.innerText);
         monthsToDisplay = 2;
-      } else return;
+      } else {
+        tooltip.remove();
+        return;
+      }
       if (!isHover) return;
       if (dailyNotesHover) tooltip.innerText = await infoDailyPage(pageUid);
       else {
@@ -368,6 +371,7 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
     location: { "parent-uid": EXTENSION_PAGE_UID, order: "last" },
     block: { string: `{{streak: [[${title}]]}}`, uid: blockToRender },
   });
+
   let newNode = document.createElement("span");
   elt.appendChild(newNode);
   await window.roamAlphaAPI.ui.components.renderBlock({
@@ -438,6 +442,12 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
   } else {
     streak.style.visibility = "visible";
   }
+  // Hide created streak in the linked references
+  setTimeout(() => {
+    let rmRefElt = document.querySelector(".rm-reference-container");
+    let newStreak = rmRefElt.querySelector(".rm-streak");
+    newStreak.closest(".rm-ref-page-view").style.display = "none";
+  }, 50);
 }
 
 export async function deleteStreakBlock() {
