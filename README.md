@@ -18,7 +18,7 @@ You can also press `Ctrl or Cmd` when hovering over a page title (or shortcut) t
 Three commands in the command palette:
 - 'Get page info' (default hotkeys: `Ctrl-Alt-i`) : display in a popup detailed info and the complete streak for current page,
 - 'Get info on recent Daily Notes',
-- 'Toggle tooltips on hover': you can disable tooltips if you find them annoying. You can still see page info on over if you press `Ctrl or Cmd` (🆕 new in v.4).
+- 'Toggle tooltips on hover': you can disable tooltips if you find them annoying. You can still see page info on hover if you press `Ctrl or Cmd` (🆕 new in v.4).
 
 A command in block contextual menu:
 - 'Block info': useful if you have disabled tooltips. (🆕 new in v.4)
