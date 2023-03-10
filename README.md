@@ -1,8 +1,8 @@
-# Block & Page Info v.4
+# Block & Page Info
 
-### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip. Now, see page streak at a glance! (🆕 new in v.4)
+### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip. Now, see page streak at a glance and Pomodoros count (🆕 new in v.5)
 
-Update to v.4: February 23rd, 2023. See [changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
+[See changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
 ![block info v 4 1](https://user-images.githubusercontent.com/74436347/220415782-0a6084ac-8c19-4aa2-81a9-fd6890a2d335.gif)
 
@@ -10,7 +10,7 @@ Update to v.4: February 23rd, 2023. See [changelog here](https://github.com/fbga
 ### Tooltips
 Just hover over any bullet, page title, page shortcut or 'Daily notes' in the left sidebar to see the selected info.
 
-When hovering over 'Daily notes' in the left sidebar, see info for today and up to 6 days before (🆕 new in v.3). 
+When hovering over 'Daily notes' in the left sidebar, see info for today and up to 6 days before. 
 
 You can also press `Ctrl or Cmd` when hovering over a page title (or shortcut) to see detailed info in a popup. (🆕 new in v.4)
 
@@ -32,7 +32,8 @@ Info between brackets are optional:
 - [Character] and [word] count in current block (block references content included in count)
 - [Children blocks] count, [Character] and [word] count in children blocks
 - [DONE/TODO ratio] and percentage (or progress bar with 6 boxes: "🟩🟩🟩□□□" means more that 50%, less than 66%)
-- [Linked references count] (🆕 new in v.3)
+- [Pomodoros count] (up to 6 tomatoes 🍅 displayed, beyond that you have to rely on the number) (🆕 new in v.5)
+- [Linked references count]
   - Date of the last update of a linked reference
 - [Streak], i.e. heatmap about mention of the given page on Daily Notes (🆕 new in v.4)
 
