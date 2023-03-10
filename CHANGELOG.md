@@ -1,4 +1,13 @@
-## v.4 (February 21st, 2023)
+## v.5 (March 10th, 2023)
+### New features
+  - Pomodoros count
+### Updates
+  - Option to show/hide dates
+### Fixes
+  - Popup opened unexpectedly when pressing Ctrl, when the mouse was not hovering over a page title
+  - DONE/TODO representation with 6 squares is more accurate
+
+## v.4 (February 21st, 2023) March 10th, 2023
 ### New features
   - Streak at a glance !
   - Command to toggle on/off tooltip on hover
