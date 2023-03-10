@@ -41,6 +41,7 @@ export async function displayPageInfo(infos, type, title = "") {
   //dialog.style.top = "200px";
   //dialog.style.color = "#000000";
   let body = dialog.querySelector(".bp3-dialog-body");
+  body.style.lineHeight = "1.5";
   body.innerText = infos;
   let footer = dialog.querySelector(".bp3-dialog-footer");
   footer.style.display = "none";

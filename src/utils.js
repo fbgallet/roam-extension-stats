@@ -3,18 +3,21 @@ export const pageRegex = /\[\[.*\]\]/g; // very simplified, not recursive...
 
 export function getTreeByUid(uid) {
   if (uid) {
-    let result = window.roamAlphaAPI.q(`[:find (pull ?page
+    let paragraph = window.roamAlphaAPI.q(`[:find (pull ?page
       [:block/uid :block/string :block/children :block/refs :edit/time
          {:block/children ...} ])
        :where [?page :block/uid "${uid}"]  ]`);
-    if (result.length != 0) return result[0][0];
+    if (paragraph.length != 0) return paragraph[0][0];
     else return null;
   } else return null;
 }
 
 export function getBlockContentByUid(uid) {
-  let result = window.roamAlphaAPI.pull("[:block/string]", [":block/uid", uid]);
-  if (result) return result[":block/string"];
+  let paragraph = window.roamAlphaAPI.pull("[:block/string]", [
+    ":block/uid",
+    uid,
+  ]);
+  if (paragraph) return paragraph[":block/string"];
   else return "";
 }
 
@@ -38,14 +41,20 @@ export async function getMainPageUid() {
 }
 
 export function getPageUidByTitle(title) {
-  let result = window.roamAlphaAPI.pull("[:block/uid]", [":node/title", title]);
-  if (result) return result[":block/uid"];
+  let paragraph = window.roamAlphaAPI.pull("[:block/uid]", [
+    ":node/title",
+    title,
+  ]);
+  if (paragraph) return paragraph[":block/uid"];
   else return null;
 }
 
 export function getPageTitleByUid(uid) {
-  let result = window.roamAlphaAPI.pull("[:node/title]", [":block/uid", uid]);
-  if (result) return result[":node/title"];
+  let paragraph = window.roamAlphaAPI.pull("[:node/title]", [
+    ":block/uid",
+    uid,
+  ]);
+  if (paragraph) return paragraph[":node/title"];
   else return null;
 }
 
@@ -83,7 +92,7 @@ function getFirstChildUid(uid) {
 }
 
 export function getUser(uid) {
-  let result = window.roamAlphaAPI.pull(
+  let paragraph = window.roamAlphaAPI.pull(
     "[{:edit/user [{:user/display-page [:node/title]}]} {:create/user [{:user/display-page [:node/title]}]}]",
     [
       //[:user/display-page]
@@ -92,17 +101,18 @@ export function getUser(uid) {
     ]
   );
   let editUser, createUser;
-  if (!result) {
+  if (!paragraph) {
     editUser = "unknown user";
     createUser = "unknown user";
   } else {
-    !result[":edit/user"]
+    !paragraph[":edit/user"]
       ? (editUser = "unknown user")
-      : (editUser = result[":edit/user"][":user/display-page"][":node/title"]);
-    !result[":create/user"]
+      : (editUser =
+          paragraph[":edit/user"][":user/display-page"][":node/title"]);
+    !paragraph[":create/user"]
       ? (editUser = "unknown user")
       : (createUser =
-          result[":create/user"][":user/display-page"][":node/title"]);
+          paragraph[":create/user"][":user/display-page"][":node/title"]);
   }
   return {
     editUser: editUser,
@@ -137,4 +147,11 @@ export const resolveReferences = (content, uidsArray) => {
     }
   }
   return content;
+};
+
+export const removeTopBlankLines = (paragraph) => {
+  while (paragraph.slice(0, 1) === "\n") {
+    paragraph = paragraph.slice(1);
+  }
+  return paragraph;
 };

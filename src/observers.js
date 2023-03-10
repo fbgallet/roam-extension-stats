@@ -3,6 +3,7 @@ import {
   getMainPageUid,
   getPageUidByTitle,
   getUser,
+  removeTopBlankLines,
 } from "./utils";
 import {
   formatDateAndTime,
@@ -13,6 +14,7 @@ import {
   getYesterdayDate,
 } from "./infos";
 import {
+  displayDates,
   displayShortcutInfo,
   displayStreakRender,
   EXTENSION_PAGE_UID,
@@ -73,7 +75,7 @@ function onkeydown(e) {
 
 function onkeyup(e) {
   if (e.key === "Control" || e.key === "Meta") {
-    triggerKeyPressed = false;
+    if (!isHover) triggerKeyPressed = false;
   }
 }
 
@@ -198,7 +200,8 @@ export function infoTooltip(mutations) {
       if (!isMouseDown) {
         popover.style.transform = "initial";
         popover.style.visibility = "visible";
-        tooltip.innerText = getInfoOnBlock(undefined, target);
+        let result = getInfoOnBlock(undefined, target);
+        tooltip.innerText = removeTopBlankLines(result);
         // TODO ?
         // the tooltip still appear a split second in the top left corner,
         // before to be displayed below the bullet,
@@ -231,7 +234,11 @@ export function getInfoOnBlock(uid, target) {
     c: formatDateAndTime(parseInt(parent.parentElement.dataset.createTime)),
     u: formatDateAndTime(parseInt(parent.parentElement.dataset.editTime)),
   };
-  return getFormatedDateStrings(dates, users) + getFormatedChildrenStats(uid);
+  let datesCondition = displayDates != "None" ? true : false;
+  return (
+    getFormatedDateStrings(dates, users, "block", datesCondition) +
+    getFormatedChildrenStats(uid, users, "block", datesCondition)
+  );
 }
 
 function onTitleOver(e) {
@@ -245,11 +252,12 @@ function onTitleOver(e) {
     isHover = true;
     hoverEventTarget = e.target;
     setTimeout(async () => {
-      if (triggerKeyPressed) {
+      if (triggerKeyPressed && isHover) {
         onTriggerKeyHoverTitle(e);
         isHover = false;
         return;
       }
+      let shortcut = false;
       if (tooltipOff || !isHover) return;
       if (hoverEventTarget !== e.target) return;
       let monthsToDisplay = monthsInStreak;
@@ -283,6 +291,7 @@ function onTitleOver(e) {
       } else if (displayShortcutInfo && e.target.classList.contains("page")) {
         pageUid = await getPageUidByTitle(e.target.innerText);
         monthsToDisplay = 2;
+        shortcut = true;
       } else {
         tooltip.remove();
         return;
@@ -290,7 +299,7 @@ function onTitleOver(e) {
       if (!isHover) return;
       if (dailyNotesHover) tooltip.innerText = await infoDailyPage(pageUid);
       else {
-        tooltip.innerText = await infoPage(pageUid, title);
+        tooltip.innerText = await infoPage(pageUid, title, shortcut);
         if (displayStreakRender && !logHover) {
           displayStreak(pageUid, title, tooltip, monthsToDisplay);
         }
@@ -303,6 +312,7 @@ function onTitleOver(e) {
 function onTitleLeave(e) {
   isHover = false;
   // setTimeout(() => {
+  triggerKeyPressed = false;
   let tooltips = document.querySelectorAll(".tooltiptext");
   if (tooltips) {
     tooltips.forEach((t) => t.remove());
@@ -314,6 +324,7 @@ function onTitleLeave(e) {
 
 async function onTriggerKeyHoverTitle(e) {
   if (triggerKeyPressed) {
+    triggerKeyPressed = false;
     let title = e.target.innerText;
     if (document.querySelector(".bp3-dialog")) return;
     // if on 'Daily Notes'
@@ -332,7 +343,7 @@ async function onTriggerKeyHoverTitle(e) {
     tooltipOff ? (displayAllInfo = false) : (displayAllInfo = true);
     let pageUid = await getPageUidByTitle(title);
     displayPageInfo(
-      await infoPage(pageUid, title, displayAllInfo),
+      await infoPage(pageUid, title, false, displayAllInfo),
       "Page",
       title
     );
@@ -343,29 +354,45 @@ async function onTriggerKeyHoverTitle(e) {
   }
 }
 
-function onHoverLeave() {
-  isHover = false;
-  let tooltip = document.querySelector(".tooltiptext");
-  // console.log("removed!");
-  if (tooltip) tooltip.remove();
-}
-
-export async function infoPage(pageUid, title, displayAll = false) {
+export async function infoPage(
+  pageUid,
+  title,
+  shortcut = false,
+  displayAll = false
+) {
   if (!pageUid) pageUid = await getMainPageUid();
   let users = getUser(pageUid);
-
-  return `${getFormatedDateStrings(
+  let datesCondition =
+    displayDates === "None" ||
+    (displayDates === "Not for pages" && !shortcut) ||
+    (displayDates === "Not for shortcuts" && shortcut)
+      ? false
+      : true;
+  let result = `${getFormatedDateStrings(
     getDateStrings(pageUid),
     users,
     title,
+    datesCondition,
     displayAll
-  )}${getFormatedChildrenStats(pageUid, users, title, true, displayAll)}`;
+  )}${getFormatedChildrenStats(
+    pageUid,
+    users,
+    title,
+    datesCondition,
+    displayAll
+  )}`;
+  result = removeTopBlankLines(result);
+  return result;
 }
 
 export async function displayStreak(pageUid, title, elt, maxMonths) {
-  elt.innerHTML.slice(-4) === "<br>"
-    ? (elt.innerText += "\n")
-    : (elt.innerText += "\n\n");
+  if (elt.innerText.trim().length === 0) {
+    //console.log("void");
+  } else {
+    elt.innerHTML.slice(-4) === "<br>"
+      ? (elt.innerText += "\n")
+      : (elt.innerText += "\n\n");
+  }
   blockToRender = window.roamAlphaAPI.util.generateUID();
   await window.roamAlphaAPI.createBlock({
     location: { "parent-uid": EXTENSION_PAGE_UID, order: "last" },

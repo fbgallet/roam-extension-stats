@@ -3,6 +3,7 @@ import {
   displayChar,
   displayChildren,
   displayEditName,
+  displayPOMO,
   displayREFS,
   displayTODO,
   displayWord,
@@ -90,7 +91,8 @@ function getChildrenStats(
   c = 0,
   w = 0,
   b = 0,
-  task = { done: 0, todo: 0 }
+  task = { done: 0, todo: 0 },
+  pomo = 0
 ) {
   for (let i = 0; i < tree.length; i++) {
     let content = resolveReferences(tree[i].string, [tree[i].uid]);
@@ -102,6 +104,7 @@ function getChildrenStats(
       task.done++;
       task.todo++;
     } else if (content.includes("[[TODO]]")) task.todo++;
+    if (content.includes("{{[[POMO]]:")) pomo++;
     if (tree[i].time > newestTime) {
       newestTime = tree[i].time;
       editUser = users.editUser;
@@ -113,6 +116,7 @@ function getChildrenStats(
       b += r.blocks;
       task.done += r.done;
       task.todo += r.todo;
+      pomo += r.pomo;
       newestTime = r.newestTime;
       editUser = r.editUser;
     }
@@ -123,6 +127,7 @@ function getChildrenStats(
     blocks: b,
     done: task.done,
     todo: task.todo,
+    pomo: pomo,
     newestTime: newestTime,
     editUser: editUser,
   };
@@ -161,19 +166,19 @@ function displayPercentage(a, b, mode) {
     } else {
       percent *= 6;
       if (percent === 6) left = "🟩🟩🟩🟩🟩🟩";
-      else if (percent > 5) {
+      else if (percent >= 5) {
         left = "🟩🟩🟩🟩🟩";
         right = "□";
-      } else if (percent > 4) {
+      } else if (percent >= 4) {
         left = "🟩🟩🟩🟩";
         right = "□□";
-      } else if (percent > 3) {
+      } else if (percent >= 3) {
         left = "🟩🟩🟩";
         right = "□□□";
-      } else if (percent > 2) {
+      } else if (percent >= 2) {
         left = "🟩🟩";
         right = "□□□□";
-      } else if (percent > 1) {
+      } else if (percent >= 1) {
         left = "🟩";
         right = "□□□□□";
       } else {
@@ -198,20 +203,23 @@ export function getFormatedDateStrings(
   dates,
   users,
   node = "block",
+  dateCondition,
   displayAll = false
 ) {
   let result = "";
   // let dates = getDateStrings(uid);
   let doNotDisplayCreateName = false;
 
-  result += `Created:\n${dates.c.date}, ${dates.c.time}`;
+  if (dateCondition || displayAll)
+    result += `Created:\n${dates.c.date}, ${dates.c.time}`;
   if (displayEditName || displayAll) result += `\nby ${users.createUser}`;
   if (
     node === "block" &&
     (dates.c.date != dates.u.date ||
       dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
   ) {
-    result += `\nUpdated:\n${dates.u.date}, ${dates.u.time}`;
+    if (dateCondition || displayAll)
+      result += `\nUpdated:\n${dates.u.date}, ${dates.u.time}`;
   } else {
     doNotDisplayCreateName = true;
   }
@@ -273,6 +281,16 @@ export function getFormatedChildrenStats(
     if ((displayTODO || displayAll) && cStats.todo != 0) {
       let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
       result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
+    }
+    if (displayPOMO || displayAll) {
+      if (cStats.pomo != 0) {
+        result += `\n${cStats.pomo} `;
+        let i = 1;
+        while (i <= cStats.pomo && i < 7) {
+          result += "🍅";
+          i++;
+        }
+      }
     }
   }
   if (displayREFS || displayAll) {

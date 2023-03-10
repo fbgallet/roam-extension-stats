@@ -16,6 +16,7 @@ import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
 export const EXTENSION_PAGE_UID = getExtensionPageUidOrCreateIt();
 export var tooltipOff;
 export var displayEditName;
+export var displayDates;
 export var dateFormat;
 var localDate;
 export var timeFormat;
@@ -25,6 +26,7 @@ export var displayChar;
 export var displayWord;
 export var displayTODO;
 export var modeTODO;
+export var displayPOMO;
 export var displayShortcutInfo;
 export var nbDaysBefore;
 export var tooltipDelay;
@@ -163,6 +165,31 @@ const panelConfig = {
       },
     },
     {
+      id: "displayDates",
+      name: "Dates",
+      description: "Display creation and, if different, update dates:",
+      action: {
+        type: "select",
+        items: ["All", "Not for shortcuts", "Not for pages", "None"],
+        onChange: (evt) => {
+          switch (evt) {
+            case "All":
+              displayDates = "All";
+              return;
+            case "Not for shortcuts":
+              displayDates = "Not for shortcuts";
+              return;
+            case "Not for pages":
+              displayDates = "Not for pages";
+              return;
+            case "None":
+              displayDates = "None";
+              return;
+          }
+        },
+      },
+    },
+    {
       id: "dateFormat",
       name: "Date format",
       description: "Select how dates are displayed",
@@ -264,6 +291,17 @@ const panelConfig = {
       },
     },
     {
+      id: "displayPOMO",
+      name: "[[POMO]] count",
+      description: "Display Pomodoros count in children:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayPOMO = !displayPOMO;
+        },
+      },
+    },
+    {
       id: "displayREFS",
       name: "References count",
       description: "Display linked reference count and last update date:",
@@ -325,6 +363,9 @@ export default {
     if (extensionAPI.settings.get("displayName") === null)
       await extensionAPI.settings.set("displayName", false);
     displayEditName = extensionAPI.settings.get("displayName");
+    if (extensionAPI.settings.get("displayDates") === null)
+      await extensionAPI.settings.set("displayDates", "All");
+    displayDates = extensionAPI.settings.get("displayDates");
     if (extensionAPI.settings.get("dateFormat") === null)
       await extensionAPI.settings.set("dateFormat", "short");
     dateFormat = extensionAPI.settings.get("dateFormat");
@@ -351,6 +392,9 @@ export default {
     if (extensionAPI.settings.get("modeTODO") === null)
       await extensionAPI.settings.set("modeTODO", "🟩🟩🟩□□□");
     modeTODO = getModeTodo(extensionAPI.settings.get("modeTODO"));
+    if (extensionAPI.settings.get("displayPOMO") === null)
+      await extensionAPI.settings.set("displayPOMO", true);
+    displayPOMO = extensionAPI.settings.get("displayPOMO");
     if (extensionAPI.settings.get("displayREFS") === null)
       await extensionAPI.settings.set("displayREFS", false);
     displayREFS = extensionAPI.settings.get("displayREFS");
@@ -379,7 +423,7 @@ export default {
       callback: async () => {
         let pageUid = await getMainPageUid();
         let title = getPageTitleByUid(pageUid);
-        displayPageInfo(await infoPage(pageUid, title, true), "Page");
+        displayPageInfo(await infoPage(pageUid, title, false, true), "Page");
         let dialog = document.querySelector(".bp3-dialog-body");
         let newNode = document.createElement("div");
         //newNode.innerHTML = "<br>";
