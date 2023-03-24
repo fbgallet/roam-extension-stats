@@ -1,4 +1,4 @@
-## v.5 (March 10th, 2023)
+## v.5 (March 24th, 2023)
 ### New features
   - Pomodoros count
 ### Updates
