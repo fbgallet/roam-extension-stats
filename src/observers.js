@@ -34,7 +34,7 @@ let pageTitle = undefined;
 let isHover;
 let dailyLogPageTitles = [];
 export let blockToRender;
-let triggerKeyPressed = false;
+// let triggerKeyPressed = false;
 
 export function connectObservers() {
   addObserver(
@@ -63,21 +63,21 @@ export function disconnectObserver(name) {
 export function addListeners() {
   window.addEventListener("popstate", onPageLoad);
   shortcutsListener();
-  document.addEventListener("keydown", onkeydown);
-  document.addEventListener("keyup", onkeyup);
+  // document.addEventListener("keydown", onkeydown);
+  // document.addEventListener("keyup", onkeyup);
 }
 
-function onkeydown(e) {
-  if (e.key === "Control" || e.key === "Meta") {
-    triggerKeyPressed = true;
-  }
-}
+// function onkeydown(e) {
+//   if (e.key === "Control" || e.key === "Meta") {
+//     triggerKeyPressed = true;
+//   }
+// }
 
-function onkeyup(e) {
-  if (e.key === "Control" || e.key === "Meta") {
-    if (!isHover) triggerKeyPressed = false;
-  }
-}
+// function onkeyup(e) {
+//   if (e.key === "Control" || e.key === "Meta") {
+//     if (!isHover) triggerKeyPressed = false;
+//   }
+// }
 
 export function shortcutsListener() {
   let shortcuts = document.querySelectorAll(".page");
@@ -243,20 +243,20 @@ export function getInfoOnBlock(uid, target) {
 
 function onTitleOver(e) {
   {
-    if (triggerKeyPressed) {
-      onTriggerKeyHoverTitle(e);
-      isHover = false;
-      return;
-    }
+    // if (triggerKeyPressed) {
+    //   onTriggerKeyHoverTitle(e);
+    //   isHover = false;
+    //   return;
+    // }
     if (isHover) return;
     isHover = true;
     hoverEventTarget = e.target;
     setTimeout(async () => {
-      if (triggerKeyPressed && isHover) {
-        onTriggerKeyHoverTitle(e);
-        isHover = false;
-        return;
-      }
+      // if (triggerKeyPressed && isHover) {
+      //   onTriggerKeyHoverTitle(e);
+      //   isHover = false;
+      //   return;
+      // }
       let shortcut = false;
       if (tooltipOff || !isHover) return;
       if (hoverEventTarget !== e.target) return;
@@ -312,7 +312,7 @@ function onTitleOver(e) {
 function onTitleLeave(e) {
   isHover = false;
   // setTimeout(() => {
-  triggerKeyPressed = false;
+  // triggerKeyPressed = false;
   let tooltips = document.querySelectorAll(".tooltiptext");
   if (tooltips) {
     tooltips.forEach((t) => t.remove());
@@ -322,37 +322,37 @@ function onTitleLeave(e) {
   // }, 500);
 }
 
-async function onTriggerKeyHoverTitle(e) {
-  if (triggerKeyPressed) {
-    triggerKeyPressed = false;
-    let title = e.target.innerText;
-    if (document.querySelector(".bp3-dialog")) return;
-    // if on 'Daily Notes'
-    if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
-      pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
-      let daysToDisplay;
-      tooltipOff ? (daysToDisplay = nbDaysBefore) : (daysToDisplay = 6);
-      displayPageInfo(
-        await infoDailyPage(pageUid, daysToDisplay),
-        "Daily Notes"
-      );
-      return;
-    }
-    // else: title or shorcuts
-    let displayAllInfo;
-    tooltipOff ? (displayAllInfo = false) : (displayAllInfo = true);
-    let pageUid = await getPageUidByTitle(title);
-    displayPageInfo(
-      await infoPage(pageUid, title, false, displayAllInfo),
-      "Page",
-      title
-    );
-    let dialog = document.querySelector(".bp3-dialog-body");
-    let newNode = document.createElement("div");
-    dialog.appendChild(newNode);
-    displayStreak(pageUid, title, dialog);
-  }
-}
+// async function onTriggerKeyHoverTitle(e) {
+//   if (triggerKeyPressed) {
+//     triggerKeyPressed = false;
+//     let title = e.target.innerText;
+//     if (document.querySelector(".bp3-dialog")) return;
+//     // if on 'Daily Notes'
+//     if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
+//       pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
+//       let daysToDisplay;
+//       tooltipOff ? (daysToDisplay = nbDaysBefore) : (daysToDisplay = 6);
+//       displayPageInfo(
+//         await infoDailyPage(pageUid, daysToDisplay),
+//         "Daily Notes"
+//       );
+//       return;
+//     }
+//     // else: title or shorcuts
+//     let displayAllInfo;
+//     tooltipOff ? (displayAllInfo = false) : (displayAllInfo = true);
+//     let pageUid = await getPageUidByTitle(title);
+//     displayPageInfo(
+//       await infoPage(pageUid, title, false, displayAllInfo),
+//       "Page",
+//       title
+//     );
+//     let dialog = document.querySelector(".bp3-dialog-body");
+//     let newNode = document.createElement("div");
+//     dialog.appendChild(newNode);
+//     displayStreak(pageUid, title, dialog);
+//   }
+// }
 
 export async function infoPage(
   pageUid,
