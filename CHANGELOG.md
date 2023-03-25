@@ -1,3 +1,7 @@
+## v.6
+### Small update
+  - Removed the possibility to open info in a popup when hovering over title/shortcut + Ctrl/Meta: redundant with command in command palette and sometimes annoying
+
 ## v.5 (March 24th, 2023)
 ### New features
   - Pomodoros count
