@@ -25,10 +25,6 @@ const Dialog = () => {
 
 export async function displayPageInfo(infos, type, title = "") {
   title !== "" ? (typeElt = `[[${title}]] page `) : (typeElt = type);
-  const parent = document.createElement("div");
-  let t = document.querySelector(".rm-title-display");
-  t.parentElement.appendChild(parent);
-  parent.style.height = "0";
   renderOverlay({
     Overlay: Dialog,
   });

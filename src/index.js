@@ -423,7 +423,12 @@ export default {
       callback: async () => {
         let pageUid = await getMainPageUid();
         let title = getPageTitleByUid(pageUid);
-        displayPageInfo(await infoPage(pageUid, title, false, true), "Page");
+        console.log(title);
+        displayPageInfo(
+          await infoPage(pageUid, title, false, true),
+          "Page",
+          title
+        );
         let dialog = document.querySelector(".bp3-dialog-body");
         let newNode = document.createElement("div");
         //newNode.innerHTML = "<br>";
@@ -437,7 +442,7 @@ export default {
       label: "Block & Page Info: Get Info on recent Daily Notes",
       callback: async () => {
         let pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
-        displayPageInfo(await infoDailyPage(pageUid, pageUid));
+        displayPageInfo(await infoDailyPage(pageUid, 7), "Daily log");
       },
     });
 
