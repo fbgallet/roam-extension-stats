@@ -426,11 +426,15 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
     for (let i = months.length - 1; i >= 0; i--) {
       if (i < months.length - maxMonths) months[i].style.display = "none";
       else {
+        let rightShift = 0;
+        let dayOfMonth = new Date().getDate();
+        if (dayOfMonth < 12) rightShift = 2;
+        else if (dayOfMonth < 24) rightShift = 1;
         months[i].style.gridColumnStart =
-          (i - (months.length - maxMonths - 1)) * 4;
+          (i - (months.length - maxMonths - 1)) * 4 + rightShift;
       }
     }
-    let weeksToRemove = Math.floor((days.length - 28 * maxMonths) / 7);
+    let weeksToRemove = Math.floor((days.length - 28 * maxMonths) / 7) - 1;
     let lastDayNb = parseInt(days[days.length - 1].style.gridRowStart) - 1;
     let daysToDisplay = 28 * maxMonths + lastDayNb;
     // console.log(weeksToRemove);
