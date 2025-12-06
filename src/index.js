@@ -10,6 +10,7 @@ import {
 } from "./observers";
 import { displayPageInfo } from "./components";
 import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
+import { displayMainPageInfoDialog } from "./components/InfoDialog";
 
 export let tooltipOff;
 export let displayEditName;
@@ -92,7 +93,7 @@ async function toggleListenersForTooltips(firstTime) {
 }
 
 const panelConfig = {
-  tabTitle: "Blocks infos",
+  tabTitle: "Block & Page Info",
   settings: [
     {
       id: "toggleTooltips",
@@ -383,21 +384,16 @@ export default {
 
     extensionAPI.ui.commandPalette.addCommand({
       label: "Block & Page Info: Get Page Info",
-      callback: async () => {
-        let pageUid = await getMainPageUid();
-        let title = getPageTitleByUid(pageUid);
-        console.log(title);
-        displayPageInfo(
-          await infoPage(pageUid, title, false, true),
-          "Page",
-          title,
-          {
-            showStreak: true,
-            pageUid: pageUid
-          }
-        );
-      },
+      callback: displayMainPageInfoDialog,
+      // async () => {
+
+      // },
       "default-hotkey": "ctrl-alt-i",
+    });
+
+    roamAlphaAPI.ui.pageContextMenu.addCommand({
+      label: "Block & Page Info: Get Page Info",
+      callback: displayMainPageInfoDialog,
     });
 
     extensionAPI.ui.commandPalette.addCommand({

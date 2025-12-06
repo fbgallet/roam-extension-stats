@@ -2,6 +2,8 @@ import React from "react";
 import { Dialog, Classes, Button } from "@blueprintjs/core";
 import ReactDOM from "react-dom";
 import StreakDisplay from "./StreakDisplay";
+import { getMainPageUid, getPageTitleByUid } from "../utils";
+import { infoPage } from "../observers";
 
 let containerDiv = null;
 
@@ -13,7 +15,7 @@ const InfoDialogComponent = ({
   showStreak = false,
   pageUid = null,
   pageTitle = null,
-  maxMonths = undefined
+  maxMonths = undefined,
 }) => {
   return (
     <Dialog
@@ -75,6 +77,15 @@ export function displayPageInfo(infos, type, title = "", options = {}) {
     />,
     containerDiv
   );
+}
+
+export async function displayMainPageInfoDialog() {
+  let pageUid = await getMainPageUid();
+  let title = getPageTitleByUid(pageUid);
+  displayPageInfo(await infoPage(pageUid, title, false, true), "Page", title, {
+    showStreak: true,
+    pageUid: pageUid,
+  });
 }
 
 export default InfoDialogComponent;

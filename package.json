@@ -1,7 +1,7 @@
 {
-  "name": "block-page-infos",
+  "name": "block-page-info",
   "version": "7.0.0",
-  "description": "Infos & stats on Roam blocks or pages",
+  "description": "Info & stats on Roam blocks or pages",
   "main": "extension.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
