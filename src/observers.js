@@ -17,7 +17,6 @@ import {
   displayDates,
   displayShortcutInfo,
   displayStreakRender,
-  EXTENSION_PAGE_UID,
   fontSize,
   monthsInStreak,
   nbDaysBefore,
@@ -311,15 +310,11 @@ function onTitleOver(e) {
 
 function onTitleLeave(e) {
   isHover = false;
-  // setTimeout(() => {
-  // triggerKeyPressed = false;
+
   let tooltips = document.querySelectorAll(".tooltiptext");
   if (tooltips) {
     tooltips.forEach((t) => t.remove());
-    // deleteStreakBlock();
   }
-  cleanExtensionPage();
-  // }, 500);
 }
 
 // async function onTriggerKeyHoverTitle(e) {
@@ -393,16 +388,11 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
       ? (elt.innerText += "\n")
       : (elt.innerText += "\n\n");
   }
-  blockToRender = window.roamAlphaAPI.util.generateUID();
-  await window.roamAlphaAPI.createBlock({
-    location: { "parent-uid": EXTENSION_PAGE_UID, order: "last" },
-    block: { string: `{{streak: [[${title}]]}}`, uid: blockToRender },
-  });
 
   let newNode = document.createElement("span");
   elt.appendChild(newNode);
-  await window.roamAlphaAPI.ui.components.renderBlock({
-    uid: blockToRender,
+  await window.roamAlphaAPI.ui.components.renderString({
+    string: `{{streak: [[${title}]]}}`,
     el: newNode,
   });
   elt.querySelector(".rm-block__controls").style.display = "none";
@@ -473,36 +463,6 @@ export async function displayStreak(pageUid, title, elt, maxMonths) {
   } else {
     streak.style.visibility = "visible";
   }
-  // Hide created streak in the linked references
-  setTimeout(() => {
-    let rmRefElt = document.querySelector(".rm-reference-container");
-    let newStreak = rmRefElt.querySelector(".rm-streak");
-    newStreak.closest(".rm-ref-page-view").style.display = "none";
-  }, 50);
-}
-
-export async function deleteStreakBlock() {
-  if (blockToRender) {
-    await window.roamAlphaAPI.deleteBlock({ block: { uid: blockToRender } });
-    blockToRender = null;
-  }
-}
-
-export function cleanExtensionPage() {
-  let createWarningMessage = false;
-  let blocks = getBlocksByPageTitle("roam/depot/page & block info");
-  if (blocks) {
-    createWarningMessage = true;
-    blocks.forEach((block) => {
-      if (
-        block[1] ==
-        "⚠️ Doesn't write anything on this page, all content will be deleted on each streak view in page info."
-      )
-        createWarningMessage = false;
-      else window.roamAlphaAPI.deleteBlock({ block: { uid: block[0] } });
-    });
-  } else createWarningMessage = true;
-  return createWarningMessage;
 }
 
 export async function infoDailyPage(pageUid, nbDays = nbDaysBefore) {

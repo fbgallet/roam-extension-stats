@@ -1,8 +1,6 @@
 import {
   addListeners,
-  cleanExtensionPage,
   disconnectObserver,
-  displayStreak,
   getInfoOnBlock,
   infoDailyPage,
   infoPage,
@@ -10,51 +8,29 @@ import {
   removeDailyLogListeners,
   removeListeners,
 } from "./observers";
-import { displayPageInfo, displayToast, displayTooltip } from "./components";
+import { displayPageInfo } from "./components";
 import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
 
-export const EXTENSION_PAGE_UID = getExtensionPageUidOrCreateIt();
-export var tooltipOff;
-export var displayEditName;
-export var displayDates;
-export var dateFormat;
-var localDate;
-export var timeFormat;
-export var localDateFormat;
-export var displayChildren;
-export var displayChar;
-export var displayWord;
-export var displayTODO;
-export var modeTODO;
-export var displayPOMO;
-export var displayShortcutInfo;
-export var nbDaysBefore;
-export var tooltipDelay;
-export var displayREFS;
-export var displayStreakRender;
-export var monthsInStreak;
-export var fontSize;
-
-function getExtensionPageUidOrCreateIt() {
-  let createWarningMessage = true;
-  let pageUid = getPageUidByTitle("roam/depot/page & block info");
-  if (pageUid === null) {
-    pageUid = window.roamAlphaAPI.util.generateUID();
-    window.roamAlphaAPI.createPage({
-      page: { title: "roam/depot/page & block info", uid: pageUid },
-    });
-  }
-  createWarningMessage = cleanExtensionPage();
-  if (createWarningMessage)
-    window.roamAlphaAPI.createBlock({
-      location: { "parent-uid": pageUid, order: 0 },
-      block: {
-        string:
-          "⚠️ Doesn't write anything on this page, all content will be deleted on each streak view in page info.",
-      },
-    });
-  return pageUid;
-}
+export let tooltipOff;
+export let displayEditName;
+export let displayDates;
+export let dateFormat;
+let localDate;
+export let timeFormat;
+export let localDateFormat;
+export let displayChildren;
+export let displayChar;
+export let displayWord;
+export let displayTODO;
+export let modeTODO;
+export let displayPOMO;
+export let displayShortcutInfo;
+export let nbDaysBefore;
+export let tooltipDelay;
+export let displayREFS;
+export let displayStreakRender;
+export let monthsInStreak;
+export let fontSize;
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -172,20 +148,7 @@ const panelConfig = {
         type: "select",
         items: ["All", "Not for shortcuts", "Not for pages", "None"],
         onChange: (evt) => {
-          switch (evt) {
-            case "All":
-              displayDates = "All";
-              return;
-            case "Not for shortcuts":
-              displayDates = "Not for shortcuts";
-              return;
-            case "Not for pages":
-              displayDates = "Not for pages";
-              return;
-            case "None":
-              displayDates = "None";
-              return;
-          }
+          displayDates = evt;
         },
       },
     },
@@ -427,13 +390,12 @@ export default {
         displayPageInfo(
           await infoPage(pageUid, title, false, true),
           "Page",
-          title
+          title,
+          {
+            showStreak: true,
+            pageUid: pageUid
+          }
         );
-        let dialog = document.querySelector(".bp3-dialog-body");
-        let newNode = document.createElement("div");
-        //newNode.innerHTML = "<br>";
-        dialog.appendChild(newNode);
-        displayStreak(pageUid, title, dialog);
       },
       "default-hotkey": "ctrl-alt-i",
     });

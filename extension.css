@@ -84,3 +84,18 @@
   opacity: 0.8;
   right: 5%;
 } */
+
+/* Info Dialog Styles */
+.pbi-dialog {
+  width: auto;
+  position: absolute;
+}
+
+.pbi-dialog-body {
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.pbi-streak-container {
+  margin-top: 1em;
+}

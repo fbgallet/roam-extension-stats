@@ -1,16 +1,16 @@
 {
-  "name": "roam-extension-footnotes",
-  "version": "1.0.0",
-  "description": "![image](https://user-images.githubusercontent.com/74436347/189387081-fbb7ef64-5fde-441b-97c4-0bc7bae3e520.png)",
+  "name": "block-page-infos",
+  "version": "7.0.0",
+  "description": "Infos & stats on Roam blocks or pages",
   "main": "extension.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx roamjs-scripts dev --depot"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "roamjs-components": "^0.75.1",
-    "roamjs-scripts": "^0.26.27"
+    "roamjs-scripts": "^0.27.1"
   }
 }
