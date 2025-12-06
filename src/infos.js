@@ -90,15 +90,18 @@ function getChildrenStats(
   editUser = "",
   c = 0,
   w = 0,
+  s = 0,
   b = 0,
   task = { done: 0, todo: 0 },
-  pomo = 0
+  pomo = 0,
+  newestBlockUid = ""
 ) {
   for (let i = 0; i < tree.length; i++) {
     let content = resolveReferences(tree[i].string, [tree[i].uid]);
     b++;
     c += content.length;
     if (displayWord) w += countWords(content);
+    s += countSentences(content);
     let users = getUser(tree[i].uid);
     if (content.includes("[[DONE]]")) {
       task.done++;
@@ -108,37 +111,44 @@ function getChildrenStats(
     if (tree[i].time > newestTime) {
       newestTime = tree[i].time;
       editUser = users.editUser;
+      newestBlockUid = tree[i].uid;
     }
     if (tree[i].children) {
-      let r = getChildrenStats(tree[i].children, newestTime, editUser);
+      let r = getChildrenStats(tree[i].children, newestTime, editUser, 0, 0, 0, 0, { done: 0, todo: 0 }, 0, newestBlockUid);
       c += r.characters;
       if (displayWord) w += r.words;
+      s += r.sentences;
       b += r.blocks;
       task.done += r.done;
       task.todo += r.todo;
       pomo += r.pomo;
       newestTime = r.newestTime;
       editUser = r.editUser;
+      newestBlockUid = r.newestBlockUid;
     }
   }
   return {
     characters: c,
     words: w,
+    sentences: s,
     blocks: b,
     done: task.done,
     todo: task.todo,
     pomo: pomo,
     newestTime: newestTime,
     editUser: editUser,
+    newestBlockUid: newestBlockUid,
   };
 }
 
 function getBlockStats(uid) {
   let content = resolveReferences(getBlockContentByUid(uid), [uid]);
   let wordCount = countWords(content);
+  let sentenceCount = countSentences(content);
   return {
     characters: content.length,
     words: wordCount,
+    sentences: sentenceCount,
   };
 }
 
@@ -147,6 +157,28 @@ function countWords(str) {
   str = str.replace(/[ ]{2,}/gi, " ");
   str = str.replace(/\n /, "\n");
   return str.split(" ").length;
+}
+
+function countSentences(str) {
+  // Remove extra whitespace and clean up the string
+  str = str.trim();
+  if (!str) return 0;
+
+  // Match sentences ending with ., !, or ?
+  // Handle common abbreviations (Dr., Mr., etc.) and numbers (1.5, etc.)
+  const sentences = str.match(/[^.!?]+[.!?]+/g) || [];
+
+  // If no sentence-ending punctuation found but text exists, count as 1 sentence
+  return sentences.length > 0 ? sentences.length : (str.length > 0 ? 1 : 0);
+}
+
+function calculateReadingTime(wordCount) {
+  const wordsPerMinute = 250;
+  const minutes = Math.ceil(wordCount / wordsPerMinute);
+
+  if (minutes < 1) return "< 1 min";
+  if (minutes === 1) return "1 min";
+  return `${minutes} min`;
 }
 
 function displayPercentage(a, b, mode) {
@@ -199,6 +231,22 @@ function getFormatedUserName(uid) {
   return result;
 }
 
+function countPageMentions(pageUid) {
+  // Count how many OTHER pages are mentioned on this page
+  // This gets all unique page references from blocks on this page
+  let pageRefs = window.roamAlphaAPI.q(`
+    [:find ?ref-title
+     :where
+     [?page :block/uid "${pageUid}"]
+     [?b :block/page ?page]
+     [?b :block/refs ?ref]
+     [?ref :node/title ?ref-title]]
+  `);
+
+  // Return unique count of referenced pages (excluding the page itself)
+  return pageRefs ? pageRefs.length : 0;
+}
+
 export function getFormatedDateStrings(
   dates,
   users,
@@ -210,25 +258,34 @@ export function getFormatedDateStrings(
   // let dates = getDateStrings(uid);
   let doNotDisplayCreateName = false;
 
-  if (dateCondition || displayAll)
-    result += `Created:\n${dates.c.date}, ${dates.c.time}`;
-  if (displayEditName || displayAll) result += `\nby ${users.createUser}`;
+  if (dateCondition || displayAll) {
+    if (displayAll) {
+      result += `**Created:**\n${dates.c.date}, ${dates.c.time}`;
+      if (displayEditName) result += ` by ${users.createUser}`;
+    } else {
+      result += `Created:\n${dates.c.date}, ${dates.c.time}`;
+      if (displayEditName) result += `\nby ${users.createUser}`;
+    }
+  }
   if (
     node === "block" &&
     (dates.c.date != dates.u.date ||
       dates.c.time.slice(0, -3) != dates.u.time.slice(0, -3))
   ) {
-    if (dateCondition || displayAll)
-      result += `\nUpdated:\n${dates.u.date}, ${dates.u.time}`;
+    if (dateCondition || displayAll) {
+      if (displayAll) {
+        result += `\n**Updated:**\n${dates.u.date}, ${dates.u.time}`;
+        if (displayEditName && users.editUser != users.createUser)
+          result += ` by ${users.editUser}`;
+      } else {
+        result += `\nUpdated:\n${dates.u.date}, ${dates.u.time}`;
+        if (displayEditName && users.editUser != users.createUser)
+          result += `\nby ${users.editUser}`;
+      }
+    }
   } else {
     doNotDisplayCreateName = true;
   }
-  if (
-    users.editUser != users.createUser &&
-    !doNotDisplayCreateName &&
-    (displayEditName || displayAll)
-  )
-    result += `\nby ${users.editUser}`;
   // result += "\n";
   //console.log(result);
   return result;
@@ -248,36 +305,88 @@ export function getFormatedChildrenStats(
 
   let bString = [];
   if (node === "block") {
-    if (displayChar) bString.push(bStats.characters + "c");
-    if (displayWord) bString.push(bStats.words + "w");
-    if (displayChar || displayWord) result += `\n• ${bString.join(" ")}`;
+    if (displayAll) {
+      // Detailed format for dialogs with header
+      result += `\n**Block Content:**`;
+      if (displayChar) result += `\n• ${bStats.characters} characters`;
+      if (displayWord) result += `\n• ${bStats.words} words`;
+      if (bStats.sentences > 0) {
+        result += `\n• ${bStats.sentences} sentences`;
+        if (bStats.words > 0) {
+          const avgWords = (bStats.words / bStats.sentences).toFixed(1);
+          result += ` (avg ${avgWords} words/sentence)`;
+        }
+      }
+      if (bStats.words > 0) {
+        result += `\n• Reading time: ${calculateReadingTime(bStats.words)}`;
+      }
+    } else {
+      // Compact format for tooltips
+      if (displayChar) bString.push(bStats.characters + "c");
+      if (displayWord) bString.push(bStats.words + "w");
+      if (bStats.sentences > 0) bString.push(bStats.sentences + "s");
+      if (displayChar || displayWord) result += `\n• ${bString.join(" ")}`;
+    }
   }
   if (tree.children) {
     let cStats = getChildrenStats(tree.children);
     let cString = [];
     if (node !== "block" && withDate) {
       let newestTime = formatDateAndTime(cStats.newestTime);
-      let updateString = `\nLast updated block:\n${newestTime.date}, ${newestTime.time}`;
+      let updateString;
+      if (displayAll) {
+        // For detailed dialog, add clickable block link
+        updateString = `\n**Last updated block:** [[blocklink:${cStats.newestBlockUid}:(*)]]`;
+        updateString += `\n${newestTime.date}, ${newestTime.time}`;
+      } else {
+        updateString = `\nLast updated block:\n${newestTime.date}, ${newestTime.time}`;
+      }
       if (displayEditName && cStats.editUser != users.createUser)
         updateString += `\nby ${cStats.editUser}`;
       result = updateString + result;
     }
     let nodeType;
     node !== "block" ? (nodeType = "blocks") : (nodeType = "children");
-    if (displayAll || displayChar || displayChildren || displayWord)
-      cString.push("\n");
-    if (displayChildren) cString.push(`${cStats.blocks} ${nodeType}, `);
-    if (displayChar || displayAll) {
-      displayAll
-        ? cString.push(cStats.characters + " characters,")
-        : cString.push(cStats.characters + "c");
+
+    if (displayAll) {
+      // Detailed format with header for children section
+      if (node === "block") {
+        result += `\n\n**Children Blocks:**`;
+      } else {
+        // For pages, add "Content:" header
+        result += `\n**Content:**`;
+      }
+      if (displayChildren) result += `\n• ${cStats.blocks} ${nodeType}`;
+      if (displayChar) result += `\n• ${cStats.characters} characters`;
+      if (displayWord) result += `\n• ${cStats.words} words`;
+      if (cStats.sentences > 0) {
+        result += `\n• ${cStats.sentences} sentences`;
+        if (cStats.words > 0) {
+          const avgWords = (cStats.words / cStats.sentences).toFixed(1);
+          result += ` (avg ${avgWords} words/sentence)`;
+        }
+      }
+      if (cStats.words > 0) {
+        result += `\n• Reading time: ${calculateReadingTime(cStats.words)}`;
+      }
+      // Add page mentions count for pages
+      if (node !== "block") {
+        let mentionCount = countPageMentions(uid);
+        if (mentionCount > 0) {
+          result += `\n• ${mentionCount} page mentions`;
+        }
+      }
+    } else {
+      // Compact format for tooltips
+      if (displayAll || displayChar || displayChildren || displayWord)
+        cString.push("\n");
+      if (displayChildren) cString.push(`${cStats.blocks} ${nodeType}, `);
+      if (displayChar) cString.push(cStats.characters + "c");
+      if (displayWord) cString.push(cStats.words + "w");
+      if (cStats.sentences > 0) cString.push(cStats.sentences + "s");
+      result += `${cString.join(" ")}`;
     }
-    if (displayWord || displayAll) {
-      displayAll
-        ? cString.push(cStats.words + " words")
-        : cString.push(cStats.words + "w");
-    }
-    result += `${cString.join(" ")}`;
+
     if ((displayTODO || displayAll) && cStats.todo != 0) {
       let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
       result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
@@ -299,25 +408,68 @@ export function getFormatedChildrenStats(
       ? (refs = getBlocksIncludingRef(uid))
       : (refs = getBlocksIncludingRefByTitle(node));
     let refsNb = refs.length;
-    if (refsNb > 0) {
+    if (refsNb > 0 || (displayAll && node !== "block")) {
       let newestTime = 0;
+      let oldestTime = Infinity;
       let updateTime;
+      let totalRefChars = 0;
+      let totalRefWords = 0;
+
       refs.forEach((ref) => {
         let refUid;
         node === "block" ? (refUid = ref[0]) : (refUid = ref[0].uid);
-        updateTime = getBlockTimes(refUid).update;
+        let times = getBlockTimes(refUid);
+        updateTime = times.update;
         if (updateTime > newestTime) newestTime = updateTime;
+        if (times.create < oldestTime) oldestTime = times.create;
+
+        // Count characters and words in reference blocks (including children)
+        if (displayAll) {
+          let refContent = node === "block" ? ref[1] : resolveReferences(ref[0][":block/string"] || "", []);
+          totalRefChars += refContent.length;
+          if (displayWord) totalRefWords += countWords(refContent);
+
+          // Add children content if present
+          let refTree = getTreeByUid(refUid);
+          if (refTree && refTree.children) {
+            let childStats = getChildrenStats(refTree.children);
+            totalRefChars += childStats.characters;
+            if (displayWord) totalRefWords += childStats.words;
+          }
+        }
       });
-      let refTime = formatDateAndTime(newestTime);
-      result += `\n`;
-      if (node !== "block") {
-        displayAll
-          ? (result += `\n${refsNb} linked references`)
-          : (result += `${refsNb} linked ref`);
+
+      if (displayAll && node !== "block") {
+        result += `\n\n**References:**`;
+      } else if (!displayAll) {
+        result += `\n`;
       }
-      displayAll
-        ? (result += `\nLast updated reference:\n${refTime.date}`)
-        : (result += `\nLast ref: ${refTime.date}`);
+
+      if (refsNb > 0) {
+        if (node !== "block") {
+          if (displayAll) {
+            result += `\n• ${refsNb} linked references`;
+            if (totalRefChars > 0) {
+              result += `\n• ${totalRefChars} characters in references`;
+            }
+            if (displayWord && totalRefWords > 0) {
+              result += `\n• ${totalRefWords} words in references`;
+            }
+          } else {
+            result += `${refsNb} linked ref`;
+          }
+        }
+
+        let refTimeNewest = formatDateAndTime(newestTime);
+        let refTimeOldest = formatDateAndTime(oldestTime);
+
+        if (displayAll) {
+          result += `\n• First reference: ${refTimeOldest.date}`;
+          result += `\n• Last updated reference: ${refTimeNewest.date}`;
+        } else {
+          result += `\nLast ref: ${refTimeNewest.date}`;
+        }
+      }
     }
   }
   if (result === "\n") result = "";

@@ -89,13 +89,61 @@
 .pbi-dialog {
   width: auto;
   position: absolute;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+}
+
+.pbi-dialog .bp3-dialog-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .pbi-dialog-body {
+  margin: 6px 20px 12px;
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
+.pbi-dialog-body strong {
+  font-weight: 600;
+  color: var(--text-primary, #182026);
+  font-size: 14px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
 .pbi-streak-container {
-  margin-top: 1em;
+  margin-top: 2em;
+}
+
+.pbi-block-link {
+  color: #106ba3;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.pbi-block-link:hover {
+  color: #0e5a8a;
+}
+
+.pbi-block-popover .bp3-popover-content {
+  padding: 0;
+  max-width: 400px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.pbi-block-popover-content {
+  padding: 10px;
+  max-width: 400px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.pbi-block-popover .roam-block-container {
+  padding: 0;
 }

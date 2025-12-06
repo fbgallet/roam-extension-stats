@@ -383,7 +383,7 @@ export default {
     await extensionAPI.settings.panel.create(panelConfig);
 
     extensionAPI.ui.commandPalette.addCommand({
-      label: "Block & Page Info: Get Page Info",
+      label: "Block & Page Info: Display Page Info",
       callback: displayMainPageInfoDialog,
       // async () => {
 
@@ -392,12 +392,12 @@ export default {
     });
 
     roamAlphaAPI.ui.pageContextMenu.addCommand({
-      label: "Block & Page Info: Get Page Info",
+      label: "Block & Page Info: Display Page Info",
       callback: displayMainPageInfoDialog,
     });
 
     extensionAPI.ui.commandPalette.addCommand({
-      label: "Block & Page Info: Get Info on recent Daily Notes",
+      label: "Block & Page Info: Display Info on recent Daily Notes",
       callback: async () => {
         let pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
         displayPageInfo(await infoDailyPage(pageUid, 7), "Daily log");
@@ -418,7 +418,19 @@ export default {
       label: "Block Info",
       callback: (e) => {
         let block = document.querySelector(`[id$='${e["block-uid"]}']`);
-        displayPageInfo(getInfoOnBlock(e["block-uid"], block), "Block");
+        displayPageInfo(getInfoOnBlock(e["block-uid"], block, true), "Block");
+      },
+    });
+
+    extensionAPI.ui.slashCommand.addCommand({
+      label: "Block Info",
+      callback: (args) => {
+        let block = document.querySelector(`[id$='${args["block-uid"]}']`);
+        displayPageInfo(
+          getInfoOnBlock(args["block-uid"], block, true),
+          "Block"
+        );
+        return "";
       },
     });
 

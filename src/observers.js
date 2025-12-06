@@ -217,7 +217,7 @@ export function infoTooltip(mutations) {
   }
 }
 
-export function getInfoOnBlock(uid, target) {
+export function getInfoOnBlock(uid, target, displayAll = false) {
   let parent = target.closest(".rm-block-main");
   let rmBlock = parent.querySelector(".roam-block");
   if (!uid) {
@@ -235,8 +235,8 @@ export function getInfoOnBlock(uid, target) {
   };
   let datesCondition = displayDates != "None" ? true : false;
   return (
-    getFormatedDateStrings(dates, users, "block", datesCondition) +
-    getFormatedChildrenStats(uid, users, "block", datesCondition)
+    getFormatedDateStrings(dates, users, "block", datesCondition, displayAll) +
+    getFormatedChildrenStats(uid, users, "block", datesCondition, displayAll)
   );
 }
 
