@@ -4,7 +4,7 @@
 
 [See changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
-![Block   Page v7 Demo](https://github.com/user-attachments/assets/1bd2c0ad-7b77-46c0-8853-8570e983d89a)
+![Block   Page v7 Demo](https://github.com/user-attachments/assets/a50adfc0-b96d-48c5-adbc-984769b49ff0)
 
 ### Tooltips
 
