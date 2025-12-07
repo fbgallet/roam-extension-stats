@@ -3,15 +3,19 @@
 ### New features
 
 - Slash command `/Block info` & page context command for Page info
-- Preview last updated block in Page info popup
 - Sentences count
+- Preview last updated block in Page info popup
 - CJK support (enable CJK mode in settings)
 
 ### Updates
 
-- Quicker and more reliable streak (user renderString API)
-- More complete info in Block or Page popup
+- Quicker and more reliable streak rendering (user renderString API)
+- More complete info in Block or Page popup than in tooltip
 - Includes embeded block or page in count
+
+### Fixes
+
+- Tooltip used to appear for a split second in the top left corner of the screen, but it doesn’t anymore
 
 ## v.6
 

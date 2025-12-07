@@ -125,7 +125,8 @@ const panelConfig = {
     {
       id: "delay",
       name: "Tooltip display delay",
-      description: "Delay before the tooltip is displayed on hover (in ms):",
+      description:
+        "Delay before the tooltip is displayed on hover - block bullet point not concerned (in ms):",
       action: {
         type: "input",
         onChange: (evt) => {
@@ -260,7 +261,8 @@ const panelConfig = {
     {
       id: "displayReadingTime",
       name: "Reading time",
-      description: "Display reading time for children/pages (when >= 1 minute):",
+      description:
+        "Display reading time for children/pages (when >= 1 minute):",
       action: {
         type: "switch",
         onChange: (evt) => {

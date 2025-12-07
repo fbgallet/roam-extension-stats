@@ -193,20 +193,22 @@ export function infoTooltip(mutations) {
     const tooltip = document.querySelector(".rm-bullet__tooltip");
     if (fontSize != "") tooltip.classList.add(fontSize);
     let popover = tooltip.parentElement.parentElement.parentElement;
-    popover.style.transform = "none";
-    popover.style.visibility = "hidden";
-    setTimeout(() => {
+
+    // Hide immediately to prevent native content flash
+    popover.style.opacity = "0";
+    popover.style.pointerEvents = "none";
+
+    // Replace content immediately for bullet tooltips (no delay)
+    let result = getInfoOnBlock(undefined, target);
+    tooltip.innerText = removeTopBlankLines(result);
+
+    // Brief delay to ensure content is rendered before showing
+    requestAnimationFrame(() => {
       if (!isMouseDown) {
-        popover.style.transform = "initial";
-        popover.style.visibility = "visible";
-        let result = getInfoOnBlock(undefined, target);
-        tooltip.innerText = removeTopBlankLines(result);
-        // TODO ?
-        // the tooltip still appear a split second in the top left corner,
-        // before to be displayed below the bullet,
-        // can't find any way to hidde it properly !!!
+        popover.style.opacity = "1";
+        popover.style.pointerEvents = "auto";
       }
-    }, tooltipDelay - 200);
+    });
 
     document.removeEventListener("mousedown", onMouseDown);
     function onMouseDown(e) {
