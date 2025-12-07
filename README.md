@@ -14,9 +14,9 @@ When hovering over 'Daily notes' in the left sidebar, see info for today and up 
 
 ### Commands
 
-`/Block Info` slash command (🆕 new in v.6): display in a popup detailed info about the current block and its children. It can also be triggered via block context menu.
+`/Block Info` slash command (🆕 new in v.6): just type `/info + Enter` to display in a popup detailed info about the current block and its children. It can also be triggered via block context menu or block reference context menu.
 
-`Display Page Info` via page title context menu: display in a popup detailed info about the current page and linked references.
+`Display Page Info` via page title context menu or page reference context menu: display in a popup detailed info about the current page and linked references.
 
 Three commands in the **command palette** (open with `Cmd/Ctrl-p`) with customizable hotkeys:
 

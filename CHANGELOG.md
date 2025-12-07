@@ -2,7 +2,8 @@
 
 ### New features
 
-- Slash command `/Block info` & page context command for Page info
+- Slash command `/Block info`
+- Commnads in context menu of page, page reference, block reference
 - Sentences count
 - Preview last updated block in Page info popup
 - CJK support (enable CJK mode in settings)

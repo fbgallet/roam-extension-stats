@@ -13,7 +13,7 @@ const formatContent = (text) => {
   if (!text) return text;
 
   const parts = [];
-  const lines = text.split('\n');
+  const lines = text.split("\n");
 
   lines.forEach((line, lineIndex) => {
     const segments = [];
@@ -35,14 +35,15 @@ const formatContent = (text) => {
       if (match[1] !== undefined) {
         // Bold text
         segments.push(
-          <strong key={`bold-${lineIndex}-${match.index}`}>
-            {match[1]}
-          </strong>
+          <strong key={`bold-${lineIndex}-${match.index}`}>{match[1]}</strong>
         );
       } else if (match[2] !== undefined && match[3] !== undefined) {
         // Block link
         segments.push(
-          <BlockLink key={`blocklink-${lineIndex}-${match.index}`} blockUid={match[2]}>
+          <BlockLink
+            key={`blocklink-${lineIndex}-${match.index}`}
+            blockUid={match[2]}
+          >
             {match[3]}
           </BlockLink>
         );
@@ -143,8 +144,8 @@ export function displayPageInfo(infos, type, title = "", options = {}) {
   );
 }
 
-export async function displayMainPageInfoDialog() {
-  let pageUid = await getMainPageUid();
+export async function displayMainPageInfoDialog(pageUid) {
+  if (!pageUid) pageUid = await getMainPageUid();
   let title = getPageTitleByUid(pageUid);
   displayPageInfo(await infoPage(pageUid, title, false, true), "Page", title, {
     showStreak: true,

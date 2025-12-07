@@ -433,15 +433,29 @@ export default {
     extensionAPI.ui.commandPalette.addCommand({
       label: "Block & Page Info: Display Page Info",
       callback: displayMainPageInfoDialog,
-      // async () => {
-
-      // },
       "default-hotkey": "ctrl-alt-i",
     });
 
     roamAlphaAPI.ui.pageContextMenu.addCommand({
       label: "Block & Page Info: Display Page Info",
-      callback: displayMainPageInfoDialog,
+      callback: async (args) => {
+        displayMainPageInfoDialog(args["page-uid"]);
+      },
+    });
+
+    roamAlphaAPI.ui.pageRefContextMenu.addCommand({
+      label: "Block & Page Info: Display Page Info",
+      callback: async (args) => {
+        displayMainPageInfoDialog(args["ref-uid"]);
+      },
+    });
+
+    roamAlphaAPI.ui.blockRefContextMenu.addCommand({
+      label: "Block & Page Info: Display Block Info",
+      callback: async (args) => {
+        let block = document.querySelector(`[id$='${args["block-uid"]}']`);
+        displayPageInfo(getInfoOnBlock(args["ref-uid"], block, true), "Block");
+      },
     });
 
     extensionAPI.ui.commandPalette.addCommand({
