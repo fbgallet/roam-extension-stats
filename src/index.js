@@ -3,13 +3,11 @@ import {
   disconnectObserver,
   getInfoOnBlock,
   infoDailyPage,
-  infoPage,
   onPageLoad,
   removeDailyLogListeners,
   removeListeners,
 } from "./observers";
 import { displayPageInfo } from "./components";
-import { getMainPageUid, getPageTitleByUid, getPageUidByTitle } from "./utils";
 import { displayMainPageInfoDialog } from "./components/InfoDialog";
 
 export let tooltipOff;

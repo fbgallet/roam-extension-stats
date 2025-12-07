@@ -23,7 +23,6 @@ import {
   tooltipDelay,
   tooltipOff,
 } from ".";
-import { displayPageInfo } from "./components";
 
 let observers = {
   tooltips: null,
@@ -62,21 +61,7 @@ export function disconnectObserver(name) {
 export function addListeners() {
   window.addEventListener("popstate", onPageLoad);
   shortcutsListener();
-  // document.addEventListener("keydown", onkeydown);
-  // document.addEventListener("keyup", onkeyup);
 }
-
-// function onkeydown(e) {
-//   if (e.key === "Control" || e.key === "Meta") {
-//     triggerKeyPressed = true;
-//   }
-// }
-
-// function onkeyup(e) {
-//   if (e.key === "Control" || e.key === "Meta") {
-//     if (!isHover) triggerKeyPressed = false;
-//   }
-// }
 
 export function shortcutsListener() {
   let shortcuts = document.querySelectorAll(".page");
@@ -318,38 +303,6 @@ function onTitleLeave(e) {
     tooltips.forEach((t) => t.remove());
   }
 }
-
-// async function onTriggerKeyHoverTitle(e) {
-//   if (triggerKeyPressed) {
-//     triggerKeyPressed = false;
-//     let title = e.target.innerText;
-//     if (document.querySelector(".bp3-dialog")) return;
-//     // if on 'Daily Notes'
-//     if (e.target.classList.contains("rm-left-sidebar__daily-notes")) {
-//       pageUid = await window.roamAlphaAPI.util.dateToPageUid(new Date());
-//       let daysToDisplay;
-//       tooltipOff ? (daysToDisplay = nbDaysBefore) : (daysToDisplay = 6);
-//       displayPageInfo(
-//         await infoDailyPage(pageUid, daysToDisplay),
-//         "Daily Notes"
-//       );
-//       return;
-//     }
-//     // else: title or shorcuts
-//     let displayAllInfo;
-//     tooltipOff ? (displayAllInfo = false) : (displayAllInfo = true);
-//     let pageUid = await getPageUidByTitle(title);
-//     displayPageInfo(
-//       await infoPage(pageUid, title, false, displayAllInfo),
-//       "Page",
-//       title
-//     );
-//     let dialog = document.querySelector(".bp3-dialog-body");
-//     let newNode = document.createElement("div");
-//     dialog.appendChild(newNode);
-//     displayStreak(pageUid, title, dialog);
-//   }
-// }
 
 export async function infoPage(
   pageUid,
