@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "@blueprintjs/core": "^6.4.1",
     "roamjs-scripts": "^0.27.1"
   }
