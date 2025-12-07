@@ -1,10 +1,10 @@
 # Block & Page Info
 
-### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip (replacing the native one for blocks) or more details in a popup. See characters/words/sentences count, DONE/TODO count and ratio, Pomodoros, page streak, last update block in page and more
+### Get a quick overview of useful informations on any block, page or DNP and their children, in a small tooltip (replacing the native one for blocks) or more details in a popup. See characters/words/sentences count, DONE/TODO count and ratio, Pomodoros, page streak, last update block in page and more...
 
 [See changelog here](https://github.com/fbgallet/roam-extension-stats/blob/main/CHANGELOG.md) for an overview of updates and new features 🆕
 
-![block info v 4 1](https://user-images.githubusercontent.com/74436347/220415782-0a6084ac-8c19-4aa2-81a9-fd6890a2d335.gif)
+![Block   Page v7 Demo](https://github.com/user-attachments/assets/1bd2c0ad-7b77-46c0-8853-8570e983d89a)
 
 ### Tooltips
 
