@@ -22,6 +22,7 @@ export let localDateFormat;
 export let displayChildren;
 export let displayChar;
 export let displayWord;
+export let displaySentence;
 export let displayTODO;
 export let modeTODO;
 export let displayPOMO;
@@ -32,6 +33,8 @@ export let displayREFS;
 export let displayStreakRender;
 export let monthsInStreak;
 export let fontSize;
+export let cjkMode;
+export let displayReadingTime;
 
 function getModeTodo(mode) {
   switch (mode) {
@@ -95,6 +98,18 @@ async function toggleListenersForTooltips(firstTime) {
 const panelConfig = {
   tabTitle: "Block & Page Info",
   settings: [
+    {
+      id: "cjkMode",
+      name: "CJK language support",
+      description:
+        "Enable CJK (Chinese, Japanese, Korean) counting: characters without spaces, each CJK character as a word, CJK punctuation for sentences",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          cjkMode = !cjkMode;
+        },
+      },
+    },
     {
       id: "toggleTooltips",
       name: "Toggle tooltips",
@@ -232,6 +247,28 @@ const panelConfig = {
       },
     },
     {
+      id: "displaySentence",
+      name: "Sentence count",
+      description: "Display sentence count:",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displaySentence = !displaySentence;
+        },
+      },
+    },
+    {
+      id: "displayReadingTime",
+      name: "Reading time",
+      description: "Display reading time for children/pages (when >= 1 minute):",
+      action: {
+        type: "switch",
+        onChange: (evt) => {
+          displayReadingTime = !displayReadingTime;
+        },
+      },
+    },
+    {
       id: "displayTODO",
       name: "TODO count",
       description: "Display DONE/TODO ratio in children:",
@@ -350,6 +387,15 @@ export default {
     if (extensionAPI.settings.get("displayWords") === null)
       await extensionAPI.settings.set("displayWords", true);
     displayWord = extensionAPI.settings.get("displayWords");
+    if (extensionAPI.settings.get("displaySentence") === null)
+      await extensionAPI.settings.set("displaySentence", true);
+    displaySentence = extensionAPI.settings.get("displaySentence");
+    if (extensionAPI.settings.get("displayReadingTime") === null)
+      await extensionAPI.settings.set("displayReadingTime", true);
+    displayReadingTime = extensionAPI.settings.get("displayReadingTime");
+    if (extensionAPI.settings.get("cjkMode") === null)
+      await extensionAPI.settings.set("cjkMode", false);
+    cjkMode = extensionAPI.settings.get("cjkMode");
     if (extensionAPI.settings.get("displayTODO") === null)
       await extensionAPI.settings.set("displayTODO", true);
     displayTODO = extensionAPI.settings.get("displayTODO");
@@ -407,7 +453,6 @@ export default {
     extensionAPI.ui.commandPalette.addCommand({
       label: "Block & Page Info: Toggle tooltips on hover",
       callback: () => {
-        console.log(tooltipOff);
         tooltipOff
           ? setTooltipState("Enable all")
           : setTooltipState("Disable all");

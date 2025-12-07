@@ -1,10 +1,13 @@
 import {
+  cjkMode,
   dateFormat,
   displayChar,
   displayChildren,
   displayEditName,
   displayPOMO,
+  displayReadingTime,
   displayREFS,
+  displaySentence,
   displayTODO,
   displayWord,
   localDateFormat,
@@ -16,9 +19,12 @@ import {
   getBlocksIncludingRef,
   getBlocksIncludingRefByTitle,
   getBlockTimes,
+  getPageUidByTitle,
   getTreeByUid,
   getUser,
+  pageRegex,
   resolveReferences,
+  uidRegex,
 } from "./utils";
 
 export function getDateStrings(uid) {
@@ -94,14 +100,30 @@ function getChildrenStats(
   b = 0,
   task = { done: 0, todo: 0 },
   pomo = 0,
-  newestBlockUid = ""
+  newestBlockUid = "",
+  ec = 0,
+  ew = 0,
+  es = 0,
+  eb = 0,
+  etodo = 0,
+  edone = 0
 ) {
   for (let i = 0; i < tree.length; i++) {
+    // Count embeds in this block BEFORE resolving references
+    let embedStats = getEmbedStats(tree[i].string);
+    ec += embedStats.characters;
+    ew += embedStats.words;
+    es += embedStats.sentences;
+    eb += embedStats.blocks;
+    etodo += embedStats.todo;
+    edone += embedStats.done;
+
     let content = resolveReferences(tree[i].string, [tree[i].uid]);
     b++;
-    c += content.length;
+    c += countCharacters(content);
     if (displayWord) w += countWords(content);
     s += countSentences(content);
+
     let users = getUser(tree[i].uid);
     if (content.includes("[[DONE]]")) {
       task.done++;
@@ -114,11 +136,34 @@ function getChildrenStats(
       newestBlockUid = tree[i].uid;
     }
     if (tree[i].children) {
-      let r = getChildrenStats(tree[i].children, newestTime, editUser, 0, 0, 0, 0, { done: 0, todo: 0 }, 0, newestBlockUid);
+      let r = getChildrenStats(
+        tree[i].children,
+        newestTime,
+        editUser,
+        0,
+        0,
+        0,
+        0,
+        { done: 0, todo: 0 },
+        0,
+        newestBlockUid,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      );
       c += r.characters;
       if (displayWord) w += r.words;
       s += r.sentences;
       b += r.blocks;
+      ec += r.embedCharacters;
+      ew += r.embedWords;
+      es += r.embedSentences;
+      eb += r.embedBlocks;
+      etodo += r.embedTodo;
+      edone += r.embedDone;
       task.done += r.done;
       task.todo += r.todo;
       pomo += r.pomo;
@@ -132,6 +177,12 @@ function getChildrenStats(
     words: w,
     sentences: s,
     blocks: b,
+    embedCharacters: ec,
+    embedWords: ew,
+    embedSentences: es,
+    embedBlocks: eb,
+    embedTodo: etodo,
+    embedDone: edone,
     done: task.done,
     todo: task.todo,
     pomo: pomo,
@@ -141,35 +192,209 @@ function getChildrenStats(
   };
 }
 
+// Helper function to get stats from embedded content
+function getEmbedStats(content) {
+  let embedChars = 0;
+  let embedWords = 0;
+  let embedSentences = 0;
+  let embedBlocks = 0;
+  let embedTodo = 0;
+  let embedDone = 0;
+
+  // Reset regex index
+  EMBED_REGEX.lastIndex = 0;
+
+  const matches = content.matchAll(EMBED_REGEX);
+
+  for (const match of matches) {
+    const embedType = match[1]; // Can be '-path', '-children', or empty
+    const embedRef = match[2].trim();
+
+    // Determine if it's a block or page embed
+    let embedUid = null;
+    let isBlockEmbed = false;
+
+    // Check if it's a block reference ((uid))
+    // UIDs in Roam are typically 9 characters but can vary
+    uidRegex.lastIndex = 0;
+    const blockRefMatch = embedRef.match(uidRegex);
+    if (blockRefMatch) {
+      // Extract UID by removing the (( and )) wrappers
+      embedUid = blockRefMatch[0].slice(2, -2);
+      isBlockEmbed = true;
+    }
+    // Check if it's a page reference [[page title]]
+    else {
+      pageRegex.lastIndex = 0;
+      const pageRefMatch = embedRef.match(pageRegex);
+      if (pageRefMatch) {
+        // Extract page title by removing the [[ and ]] wrappers
+        const pageTitle = pageRefMatch[0].slice(2, -2);
+        embedUid = getPageUidByTitle(pageTitle);
+        isBlockEmbed = false;
+      }
+    }
+
+    if (embedUid) {
+      if (isBlockEmbed) {
+        // For block embeds
+        if (embedType === "-children") {
+          // Only count children, not the block itself
+          let tree = getTreeByUid(embedUid);
+          if (tree && tree.children) {
+            let stats = getChildrenStats(tree.children);
+            embedChars += stats.characters;
+            embedWords += stats.words;
+            embedSentences += stats.sentences;
+            embedBlocks += stats.blocks;
+            embedTodo += stats.todo;
+            embedDone += stats.done;
+          }
+        } else {
+          // Count the block and its children
+          let blockContent = resolveReferences(getBlockContentByUid(embedUid), [
+            embedUid,
+          ]);
+          if (blockContent) {
+            embedChars += countCharacters(blockContent);
+            if (displayWord) embedWords += countWords(blockContent);
+            embedSentences += countSentences(blockContent);
+            embedBlocks += 1; // Count the block itself
+
+            // Count TODO/DONE in the embedded block itself
+            if (blockContent.includes("[[DONE]]")) {
+              embedDone++;
+              embedTodo++;
+            } else if (blockContent.includes("[[TODO]]")) {
+              embedTodo++;
+            }
+
+            // Add children stats
+            let tree = getTreeByUid(embedUid);
+            if (tree && tree.children) {
+              let stats = getChildrenStats(tree.children);
+              embedChars += stats.characters;
+              embedWords += stats.words;
+              embedSentences += stats.sentences;
+              embedBlocks += stats.blocks;
+              embedTodo += stats.todo;
+              embedDone += stats.done;
+            }
+          }
+        }
+      } else {
+        // For page embeds, count all children of the page
+        let tree = getTreeByUid(embedUid);
+        if (tree && tree.children) {
+          let stats = getChildrenStats(tree.children);
+          embedChars += stats.characters;
+          embedWords += stats.words;
+          embedSentences += stats.sentences;
+          embedBlocks += stats.blocks;
+          embedTodo += stats.todo;
+          embedDone += stats.done;
+        }
+      }
+    }
+  }
+
+  return {
+    characters: embedChars,
+    words: embedWords,
+    sentences: embedSentences,
+    blocks: embedBlocks,
+    todo: embedTodo,
+    done: embedDone,
+  };
+}
+
 function getBlockStats(uid) {
-  let content = resolveReferences(getBlockContentByUid(uid), [uid]);
+  let rawContent = getBlockContentByUid(uid);
+
+  // Get embed stats BEFORE resolving references
+  let embedStats = getEmbedStats(rawContent);
+
+  // Now resolve references for regular content counting
+  let content = resolveReferences(rawContent, [uid]);
+  let charCount = countCharacters(content);
   let wordCount = countWords(content);
   let sentenceCount = countSentences(content);
+
   return {
-    characters: content.length,
+    characters: charCount,
     words: wordCount,
     sentences: sentenceCount,
+    embedCharacters: embedStats.characters,
+    embedWords: embedStats.words,
+    embedSentences: embedStats.sentences,
+    embedBlocks: embedStats.blocks,
   };
+}
+
+// Regex to match CJK characters (Chinese, Japanese, Korean)
+// Includes: CJK Unified Ideographs, Hiragana, Katakana, Hangul, and extensions
+const CJK_REGEX =
+  /[\u3400-\u4dbf\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\uff00-\uffef]/g;
+
+// Regex to match embed syntax in Roam
+// Matches: {{embed: ((uid))}}, {{[[embed]]: ((uid))}}, {{embed-children: ((uid))}}, etc.
+const EMBED_REGEX = /\{\{\[?\[?embed(-path|-children|)\]?\]?:\s*([^\}]+)\}\}/gi;
+
+export function countCharacters(str) {
+  if (cjkMode) {
+    // In CJK mode, count characters without spaces and newlines
+    return str.replace(/[\s\n]/g, "").length;
+  }
+  return str.length;
 }
 
 function countWords(str) {
   str = str.replace(/(^\s*)|(\s*$)/gi, "");
+  if (!str) return 0;
+
+  if (cjkMode) {
+    // In CJK mode:
+    // 1. Count each CJK character as one word
+    // 2. Count non-CJK words (space-separated) normally
+    const cjkChars = str.match(CJK_REGEX) || [];
+    const cjkCount = cjkChars.length;
+
+    // Remove CJK characters and count remaining words
+    const nonCjkText = str.replace(CJK_REGEX, " ").trim();
+    let nonCjkCount = 0;
+    if (nonCjkText) {
+      const cleaned = nonCjkText
+        .replace(/[ ]{2,}/gi, " ")
+        .replace(/\n /g, "\n");
+      const words = cleaned.split(/\s+/).filter((w) => w.length > 0);
+      nonCjkCount = words.length;
+    }
+
+    return cjkCount + nonCjkCount;
+  }
+
+  // Standard word counting for non-CJK text
   str = str.replace(/[ ]{2,}/gi, " ");
   str = str.replace(/\n /, "\n");
   return str.split(" ").length;
 }
 
 function countSentences(str) {
-  // Remove extra whitespace and clean up the string
   str = str.trim();
   if (!str) return 0;
 
-  // Match sentences ending with ., !, or ?
-  // Handle common abbreviations (Dr., Mr., etc.) and numbers (1.5, etc.)
-  const sentences = str.match(/[^.!?]+[.!?]+/g) || [];
+  if (cjkMode) {
+    // In CJK mode, count sentences ending with CJK or Western punctuation
+    // CJK: 。！？；and newlines as sentence breaks
+    // Western: . ! ?
+    const allEndings = str.match(/[.!?。！？；]/g) || [];
+    // If no punctuation found but text exists, count as 1 sentence
+    return allEndings.length > 0 ? allEndings.length : 1;
+  }
 
-  // If no sentence-ending punctuation found but text exists, count as 1 sentence
-  return sentences.length > 0 ? sentences.length : (str.length > 0 ? 1 : 0);
+  // Standard sentence counting for Western text
+  const sentences = str.match(/[^.!?]+[.!?]+/g) || [];
+  return sentences.length > 0 ? sentences.length : str.length > 0 ? 1 : 0;
 }
 
 function calculateReadingTime(wordCount) {
@@ -308,23 +533,41 @@ export function getFormatedChildrenStats(
     if (displayAll) {
       // Detailed format for dialogs with header
       result += `\n**Block Content:**`;
-      if (displayChar) result += `\n• ${bStats.characters} characters`;
-      if (displayWord) result += `\n• ${bStats.words} words`;
-      if (bStats.sentences > 0) {
-        result += `\n• ${bStats.sentences} sentences`;
+      if (displayChar) {
+        const totalChars = bStats.characters + bStats.embedCharacters;
+        result += `\n• ${totalChars} characters`;
+        if (bStats.embedCharacters > 0) {
+          result += ` (${bStats.embedCharacters} in embeds)`;
+        }
+      }
+      if (displayWord) {
+        const totalWords = bStats.words + bStats.embedWords;
+        result += `\n• ${totalWords} words`;
+        if (bStats.embedWords > 0) {
+          result += ` (${bStats.embedWords} in embeds)`;
+        }
+      }
+      if (displaySentence && bStats.sentences > 0) {
+        const totalSentences = bStats.sentences + bStats.embedSentences;
+        result += `\n• ${totalSentences} sentences`;
+        if (bStats.embedSentences > 0) {
+          result += ` (${bStats.embedSentences} in embeds)`;
+        }
         if (bStats.words > 0) {
           const avgWords = (bStats.words / bStats.sentences).toFixed(1);
           result += ` (avg ${avgWords} words/sentence)`;
         }
       }
-      if (bStats.words > 0) {
-        result += `\n• Reading time: ${calculateReadingTime(bStats.words)}`;
-      }
     } else {
-      // Compact format for tooltips
-      if (displayChar) bString.push(bStats.characters + "c");
-      if (displayWord) bString.push(bStats.words + "w");
-      if (bStats.sentences > 0) bString.push(bStats.sentences + "s");
+      // Compact format for tooltips - include embed counts
+      const totalChars = bStats.characters + bStats.embedCharacters;
+      const totalWords = bStats.words + bStats.embedWords;
+      const totalSentences = bStats.sentences + bStats.embedSentences;
+
+      if (displayChar) bString.push(totalChars + "c");
+      if (displayWord) bString.push(totalWords + "w");
+      if (displaySentence && totalSentences > 0)
+        bString.push(totalSentences + "s");
       if (displayChar || displayWord) result += `\n• ${bString.join(" ")}`;
     }
   }
@@ -356,18 +599,44 @@ export function getFormatedChildrenStats(
         // For pages, add "Content:" header
         result += `\n**Content:**`;
       }
-      if (displayChildren) result += `\n• ${cStats.blocks} ${nodeType}`;
-      if (displayChar) result += `\n• ${cStats.characters} characters`;
-      if (displayWord) result += `\n• ${cStats.words} words`;
-      if (cStats.sentences > 0) {
-        result += `\n• ${cStats.sentences} sentences`;
+      if (displayChildren) {
+        const totalBlocks = cStats.blocks + cStats.embedBlocks;
+        result += `\n• ${totalBlocks} ${nodeType}`;
+        if (cStats.embedBlocks > 0) {
+          result += ` (${cStats.embedBlocks} in embeds)`;
+        }
+      }
+      if (displayChar) {
+        const totalChars = cStats.characters + cStats.embedCharacters;
+        result += `\n• ${totalChars} characters`;
+        if (cStats.embedCharacters > 0) {
+          result += ` (${cStats.embedCharacters} in embeds)`;
+        }
+      }
+      if (displayWord) {
+        const totalWords = cStats.words + cStats.embedWords;
+        result += `\n• ${totalWords} words`;
+        if (cStats.embedWords > 0) {
+          result += ` (${cStats.embedWords} in embeds)`;
+        }
+      }
+      if (displaySentence && cStats.sentences > 0) {
+        const totalSentences = cStats.sentences + cStats.embedSentences;
+        result += `\n• ${totalSentences} sentences`;
+        if (cStats.embedSentences > 0) {
+          result += ` (${cStats.embedSentences} in embeds)`;
+        }
         if (cStats.words > 0) {
           const avgWords = (cStats.words / cStats.sentences).toFixed(1);
           result += ` (avg ${avgWords} words/sentence)`;
         }
       }
-      if (cStats.words > 0) {
-        result += `\n• Reading time: ${calculateReadingTime(cStats.words)}`;
+      // Only show reading time for children if >= 1 minute (250+ words) and if enabled
+      if (displayReadingTime) {
+        const totalWords = cStats.words + cStats.embedWords;
+        if (totalWords >= 250) {
+          result += `\n• Reading time: ${calculateReadingTime(totalWords)}`;
+        }
       }
       // Add page mentions count for pages
       if (node !== "block") {
@@ -377,19 +646,30 @@ export function getFormatedChildrenStats(
         }
       }
     } else {
-      // Compact format for tooltips
+      // Compact format for tooltips - include embed counts
+      const totalChars = cStats.characters + cStats.embedCharacters;
+      const totalWords = cStats.words + cStats.embedWords;
+      const totalSentences = cStats.sentences + cStats.embedSentences;
+      const totalBlocks = cStats.blocks + cStats.embedBlocks;
+
       if (displayAll || displayChar || displayChildren || displayWord)
         cString.push("\n");
-      if (displayChildren) cString.push(`${cStats.blocks} ${nodeType}, `);
-      if (displayChar) cString.push(cStats.characters + "c");
-      if (displayWord) cString.push(cStats.words + "w");
-      if (cStats.sentences > 0) cString.push(cStats.sentences + "s");
+      if (displayChildren) cString.push(`${totalBlocks} ${nodeType}, `);
+      if (displayChar) cString.push(totalChars + "c");
+      if (displayWord) cString.push(totalWords + "w");
+      if (displaySentence && totalSentences > 0)
+        cString.push(totalSentences + "s");
       result += `${cString.join(" ")}`;
     }
 
-    if ((displayTODO || displayAll) && cStats.todo != 0) {
-      let percent = displayPercentage(cStats.done, cStats.todo, modeTODO);
-      result += `\n☑ ${cStats.done}/${cStats.todo} ${percent}`;
+    if ((displayTODO || displayAll) && (cStats.todo != 0 || cStats.embedTodo != 0)) {
+      const totalTodo = cStats.todo + cStats.embedTodo;
+      const totalDone = cStats.done + cStats.embedDone;
+      let percent = displayPercentage(totalDone, totalTodo, modeTODO);
+      result += `\n☑ ${totalDone}/${totalTodo} ${percent}`;
+      if (cStats.embedTodo > 0) {
+        result += ` (${cStats.embedDone}/${cStats.embedTodo} in embeds)`;
+      }
     }
     if (displayPOMO || displayAll) {
       if (cStats.pomo != 0) {
@@ -415,6 +695,9 @@ export function getFormatedChildrenStats(
       let totalRefChars = 0;
       let totalRefWords = 0;
 
+      let totalRefTodo = 0;
+      let totalRefDone = 0;
+
       refs.forEach((ref) => {
         let refUid;
         node === "block" ? (refUid = ref[0]) : (refUid = ref[0].uid);
@@ -423,11 +706,22 @@ export function getFormatedChildrenStats(
         if (updateTime > newestTime) newestTime = updateTime;
         if (times.create < oldestTime) oldestTime = times.create;
 
-        // Count characters and words in reference blocks (including children)
+        // Count characters, words, and TODO/DONE in reference blocks (including children)
         if (displayAll) {
-          let refContent = node === "block" ? ref[1] : resolveReferences(ref[0][":block/string"] || "", []);
-          totalRefChars += refContent.length;
+          let refContent =
+            node === "block"
+              ? ref[1]
+              : resolveReferences(ref[0][":block/string"] || "", []);
+          totalRefChars += countCharacters(refContent);
           if (displayWord) totalRefWords += countWords(refContent);
+
+          // Count TODO/DONE in the reference block itself
+          if (refContent.includes("[[DONE]]")) {
+            totalRefDone++;
+            totalRefTodo++;
+          } else if (refContent.includes("[[TODO]]")) {
+            totalRefTodo++;
+          }
 
           // Add children content if present
           let refTree = getTreeByUid(refUid);
@@ -435,6 +729,8 @@ export function getFormatedChildrenStats(
             let childStats = getChildrenStats(refTree.children);
             totalRefChars += childStats.characters;
             if (displayWord) totalRefWords += childStats.words;
+            totalRefTodo += childStats.todo;
+            totalRefDone += childStats.done;
           }
         }
       });
@@ -454,6 +750,14 @@ export function getFormatedChildrenStats(
             }
             if (displayWord && totalRefWords > 0) {
               result += `\n• ${totalRefWords} words in references`;
+            }
+            if (totalRefTodo > 0) {
+              let percent = displayPercentage(
+                totalRefDone,
+                totalRefTodo,
+                modeTODO
+              );
+              result += `\n• ☑ ${totalRefDone}/${totalRefTodo} in references ${percent}`;
             }
           } else {
             result += `${refsNb} linked ref`;
